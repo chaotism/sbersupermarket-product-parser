@@ -12,6 +12,7 @@ docker-compose  -f docker/docker-compose-dev.yml up
 ## Close plans
 add supporting sql databases
 add cache
+add seeding request with request_ids
 add mypy to git-commit hooks (need fix issues)
 migrate to python 3.11
 fix TODOS
