@@ -12,6 +12,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from clients.parser.proxies import get_proxy
 from clients.parser.useragent import get_useragent
 from common.errors import ProviderError
+from common.utils import retry_by_exception
 from config.client import ParserSettings
 
 DEFAULT_TIME_TO_WAIT = 3
@@ -84,6 +85,7 @@ class BaseParser:
     def is_inited(self):
         return self.config is not None and self.client is not None
 
+    @retry_by_exception(exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3)
     def init(self, config: ParserSettings):
         if self.is_inited:
             logger.info('Already inited')
@@ -98,6 +100,7 @@ class BaseParser:
         self.client = client
         logger.info('Chrome client ready')
 
+    @retry_by_exception(exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3)
     def close_client(self):  # TODO: migrate to pool
         if not self.is_inited:
             logger.warning('Chrome client is not inited')

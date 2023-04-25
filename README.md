@@ -15,6 +15,7 @@ add cache
 add mypy to git-commit hooks (need fix issues)
 migrate to python 3.11
 fix TODOS
+check chromedrive and chrome versions for compatibility
 
 ## Future Plans
 add supporting sql databases
