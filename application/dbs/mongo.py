@@ -1,28 +1,21 @@
 from typing import Optional
 
+from config.db import MongodbSettings
+from common.errors import DatabaseError
 from loguru import logger
 from motor import motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from config.db import MongodbSettings
-from domain.errors import DatabaseError
-
 
 class MongoMotorAdapter:
-    config: Optional[MongodbSettings]
-    client: Optional[AsyncIOMotorClient]
-    db: Optional[AsyncIOMotorDatabase]
-
-    def __init__(self):
-        logger.info('Init config')
-        self.config = None
-        self.client = None
-        self.db = None
+    config: Optional[MongodbSettings] = None  # TODO: could remove (its for debug only)
+    client: Optional[AsyncIOMotorClient] = None
+    db: Optional[AsyncIOMotorDatabase] = None
 
     @property
     def is_inited(self):
         return (
-            self.client is not None and self.db is not None and self.config is not None
+            self.config is not None and self.client is not None and self.db is not None
         )
 
     async def get_db(self):

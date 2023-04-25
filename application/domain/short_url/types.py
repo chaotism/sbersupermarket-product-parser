@@ -8,7 +8,6 @@ UrlID = NewType('UrlID', PDObjectId)
 
 
 class UrlName(str):
-    min_length = 3
     max_length = 50
 
     @classmethod
