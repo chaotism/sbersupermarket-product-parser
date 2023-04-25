@@ -74,6 +74,7 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
 
     def retry_decorator(func: Callable):
         if not asyncio.iscoroutinefunction(func):
+
             @retry(tries=max_tries, exceptions=exceptions, **kwargs)
             def log_exception(*args, **kwargs):
                 try:
@@ -83,7 +84,9 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
                         f'Function {func.__name__} raised exception {ex.__class__.__name__}({ex}). Restarting'
                     )
                     raise
+
         else:
+
             @asyncretry(max_tries=max_tries, exceptions=exceptions, **kwargs)
             async def log_exception(*args, **kwargs):
                 try:
