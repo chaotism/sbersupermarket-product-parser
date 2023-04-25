@@ -1,6 +1,5 @@
-from contextlib import contextmanager
 from queue import Queue
-from typing import Optional, Generator
+from typing import Optional
 
 import undetected_chromedriver as uc
 from loguru import logger
@@ -16,6 +15,7 @@ from common.utils import retry_by_exception
 from config.client import ParserSettings
 
 DEFAULT_TIME_TO_WAIT = 3
+DEFAULT_POOL_SIZE = 3
 
 
 def get_web_driver(
@@ -47,28 +47,6 @@ def get_web_driver(
     # chrome.set_page_load_timeout(time_to_wait=DEFAULT_TIME_TO_WAIT)
     # assert chrome.is_connectable()
     return chrome
-
-
-@contextmanager
-def get_web_drivers_pool(  # FIXME: crashed in one thread calling
-    count: int, headless=True, proxy=False, random_useragent=False
-) -> Generator[Queue[uc.Chrome], None, None]:
-    driver_queue = Queue(maxsize=count)  # TODO: migrate to async queue
-    try:
-        for _ in range(count):
-            driver_queue.put(
-                get_web_driver(
-                    headless=headless,
-                    proxy=get_proxy() if proxy else None,
-                    useragent=get_useragent() if random_useragent else None,
-                )
-            )
-        yield driver_queue
-    finally:
-        while not driver_queue.empty():
-            driver = driver_queue.get()
-            driver.close()
-            driver.quit()
 
 
 class BaseParser:
@@ -169,4 +147,32 @@ class BaseParser:
         return []
 
 
-parser_client = BaseParser()
+class ParserPool:
+    def __init__(self, size: int) -> None:
+        self.size = size
+        self.pool = Queue(maxsize=size * 2)
+
+    def init(self, config: ParserSettings):
+        if not self.pool.empty():
+            logger.info('Already inited')
+            return
+
+        for _ in range(self.size):
+            parser = BaseParser()
+            parser.init(config)
+
+            self.pool.put(parser)
+
+    def close(self):
+        while not self.pool.empty():
+            parser = self.pool.get()
+            parser.close_client()
+
+    def get(self) -> BaseParser:
+        return self.pool.get()
+
+    def put(self, parser: BaseParser):
+        return self.pool.put(parser)
+
+
+parser_pool = ParserPool(DEFAULT_POOL_SIZE)
