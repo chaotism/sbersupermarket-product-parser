@@ -15,7 +15,6 @@ from common.utils import retry_by_exception
 from config.client import ParserSettings
 
 DEFAULT_TIME_TO_WAIT = 3
-DEFAULT_POOL_SIZE = 5  # TODO: move to config
 
 
 def get_web_driver(
@@ -56,7 +55,7 @@ class BaseParser:
 
     RETRY_COUNT = 3
 
-    config: Optional[ParserSettings] = None  # TODO: could remove (its for debug only)
+    config: Optional[ParserSettings] = None
     client: Optional[uc.Chrome] = None
 
     @property
@@ -83,7 +82,7 @@ class BaseParser:
     @retry_by_exception(
         exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3
     )
-    def close_client(self):  # TODO: migrate to pool
+    def close_client(self):
         if not self.is_inited:
             logger.warning('Chrome client is not inited')
             return
@@ -148,22 +147,34 @@ class BaseParser:
 
 
 class ParserPool:
-    def __init__(self, size: int) -> None:
-        self.size = size
-        self.pool = Queue(maxsize=size)
+    config: Optional[ParserSettings] = None
+    pool: Optional[Queue] = None
+
+    @property
+    def is_inited(self):
+        return (
+            self.config is not None and self.pool is not None and not self.pool.empty()
+        )
 
     def init(self, config: ParserSettings):
-        if not self.pool.empty():
+        if self.is_inited:
             logger.info('Already inited')
             return
 
-        for _ in range(self.size):
+        self.config = config
+        self.pool = Queue(maxsize=self.config.pool_size)
+
+        for _ in range(self.pool.maxsize):
             parser = BaseParser()
-            parser.init(config)
+            parser.init(self.config)
 
             self.pool.put(parser)
 
     def close(self):
+        if not self.is_inited:
+            logger.warning('Pool is not inited')
+            return
+
         while not self.pool.empty():
             parser = self.pool.get()
             parser.close_client()
@@ -175,4 +186,4 @@ class ParserPool:
         return self.pool.put(parser)
 
 
-parser_pool = ParserPool(DEFAULT_POOL_SIZE)
+parser_pool = ParserPool()

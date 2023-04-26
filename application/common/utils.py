@@ -5,7 +5,6 @@ import asyncio
 import contextvars
 import time
 from functools import partial, wraps
-from itertools import count
 from typing import Callable, Coroutine, List
 
 from aiomisc import asyncretry, cancel_tasks
@@ -141,15 +140,3 @@ def cancel_all_tasks_wrapper(
         return func(*args, **kwargs)
 
     return run
-
-
-def message_number_gen() -> Callable:  # TODO: use in background task
-    """
-    Returns increment int generator.
-    """
-    cnt = count()
-
-    def get_next_number() -> int:
-        return next(cnt)
-
-    return get_next_number
