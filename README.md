@@ -15,6 +15,8 @@ add health check db and client
 add cache
 add mypy to git-commit hooks (need fix issues)
 migrate to python 3.11
+use to python 3.11
+use similar to https://hub.docker.com/r/ultrafunk/undetected-chromedriver docker container but much more thin
 fix TODOS
 check chromedrive and chrome versions for compatibility
 
@@ -23,3 +25,4 @@ add supporting sql databases
 add search by entity fields
 add chromium clients pool
 add background task for updating outdated data
+use remote webdrivers
