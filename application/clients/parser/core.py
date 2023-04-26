@@ -6,7 +6,7 @@ from loguru import logger
 from pydantic import HttpUrl
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
+from bs4 import BeautifulSoup, Tag
 
 from clients.parser.proxies import get_proxy
 from clients.parser.useragent import get_useragent
@@ -101,7 +101,7 @@ class BaseParser:
         self.close_client()
         self.init(self.config)
 
-    def get_page(self, url: HttpUrl) -> uc.Chrome:
+    def get_page(self, url: HttpUrl) -> BeautifulSoup:
         if not self.is_inited:
             raise ProviderError(f'{self.__class__.__name__} is not inited')
         logger.debug(f'Get page {url}')
@@ -112,7 +112,8 @@ class BaseParser:
                 logger.debug(
                     f'Current page is {self.client.current_url} with source {self.client.page_source}'
                 )
-                return self.client
+                soup = BeautifulSoup(self.client.page_source, 'html.parser')
+                return soup
             except (WebDriverException, TimeoutException, TimeoutError) as err:
                 logger.warning(
                     f'Get webdriver exception {str(err)} try to restart client'
@@ -121,13 +122,16 @@ class BaseParser:
                     raise err
                 self.restart()
 
-    def get_elements(self, by: By, name: str) -> list[WebElement]:
+    def get_elements(self, by: By, name: str, data: BeautifulSoup) -> list[Tag]:
         if not self.is_inited:
             raise ProviderError(f'{self.__class__.__name__} is not inited')
         logger.debug(f'Get elements by {by} with value {name}')
+        if by != By.CLASS_NAME:
+            raise NotImplementedError
+
         for _ in range(self.RETRY_COUNT):
             try:
-                elements = self.client.find_elements(by, name)
+                elements = [item for item in data.find_all(class_=name)]
                 if not elements:
                     continue
                 return elements

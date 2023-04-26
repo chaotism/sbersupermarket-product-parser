@@ -13,6 +13,7 @@ docker-compose  -f docker/docker-compose-dev.yml up
 add supporting sql databases
 add health check db and client
 add cache
+add seeding request with request_ids
 add mypy to git-commit hooks (need fix issues)
 migrate to python 3.11
 use to python 3.11
