@@ -15,7 +15,7 @@ from common.utils import retry_by_exception
 from config.client import ParserSettings
 
 DEFAULT_TIME_TO_WAIT = 3
-DEFAULT_POOL_SIZE = 3
+DEFAULT_POOL_SIZE = 5  # TODO: move to config
 
 
 def get_web_driver(
@@ -110,6 +110,9 @@ class BaseParser:
         for i in range(self.RETRY_COUNT + 1):
             try:
                 self.client.get(url)
+                logger.debug(
+                    f'Current page is {self.client.current_url} with source {self.client.page_source}'
+                )
                 return self.client
             except (WebDriverException, TimeoutException, TimeoutError) as err:
                 logger.warning(
@@ -122,9 +125,6 @@ class BaseParser:
     def get_elements(self, by: By, name: str) -> list[WebElement]:
         if not self.is_inited:
             raise ProviderError(f'{self.__class__.__name__} is not inited')
-        logger.debug(
-            f'Current page is {self.client.current_url} with source  {self.client.page_source}'
-        )
         logger.debug(f'Get elements by {by} with value {name}')
         for _ in range(self.RETRY_COUNT):
             try:
@@ -150,7 +150,7 @@ class BaseParser:
 class ParserPool:
     def __init__(self, size: int) -> None:
         self.size = size
-        self.pool = Queue(maxsize=size * 2)
+        self.pool = Queue(maxsize=size)
 
     def init(self, config: ParserSettings):
         if not self.pool.empty():

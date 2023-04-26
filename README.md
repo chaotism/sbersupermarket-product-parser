@@ -21,6 +21,9 @@ fix TODOS
 check chromedrive and chrome versions for compatibility
 
 ## Future Plans
+add try to different url upload policies (normal: This strategy causes Selenium to wait for the full page loading (html content and sub resources downloaded and parsed).
+eager : This strategy causes Selenium to wait for the DOMContentLoaded event (html content downloaded and parsed only).
+none : This strategy causes Selenium to return immediately after the initial page content is fully received (html content downloaded).)
 add supporting sql databases
 add search by entity fields
 add chromium clients pool
