@@ -1,6 +1,5 @@
-from contextlib import contextmanager
 from queue import Queue
-from typing import Optional, Generator
+from typing import Optional
 
 import undetected_chromedriver as uc
 from loguru import logger
@@ -49,28 +48,6 @@ def get_web_driver(
     return chrome
 
 
-@contextmanager
-def get_web_drivers_pool(  # FIXME: crashed in one thread calling
-    count: int, headless=True, proxy=False, random_useragent=False
-) -> Generator[Queue[uc.Chrome], None, None]:
-    driver_queue = Queue(maxsize=count)  # TODO: migrate to async queue
-    try:
-        for _ in range(count):
-            driver_queue.put(
-                get_web_driver(
-                    headless=headless,
-                    proxy=get_proxy() if proxy else None,
-                    useragent=get_useragent() if random_useragent else None,
-                )
-            )
-        yield driver_queue
-    finally:
-        while not driver_queue.empty():
-            driver = driver_queue.get()
-            driver.close()
-            driver.quit()
-
-
 class BaseParser:
     """
     Base wrapper on undetectable chromium.
@@ -78,7 +55,7 @@ class BaseParser:
 
     RETRY_COUNT = 3
 
-    config: Optional[ParserSettings] = None  # TODO: could remove (its for debug only)
+    config: Optional[ParserSettings] = None
     client: Optional[uc.Chrome] = None
 
     @property
@@ -105,7 +82,7 @@ class BaseParser:
     @retry_by_exception(
         exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3
     )
-    def close_client(self):  # TODO: migrate to pool
+    def close_client(self):
         if not self.is_inited:
             logger.warning('Chrome client is not inited')
             return
@@ -132,6 +109,9 @@ class BaseParser:
         for i in range(self.RETRY_COUNT + 1):
             try:
                 self.client.get(url)
+                logger.debug(
+                    f'Current page is {self.client.current_url} with source {self.client.page_source}'
+                )
                 return self.client
             except (WebDriverException, TimeoutException, TimeoutError) as err:
                 logger.warning(
@@ -144,9 +124,6 @@ class BaseParser:
     def get_elements(self, by: By, name: str) -> list[WebElement]:
         if not self.is_inited:
             raise ProviderError(f'{self.__class__.__name__} is not inited')
-        logger.debug(
-            f'Current page is {self.client.current_url} with source  {self.client.page_source}'
-        )
         logger.debug(f'Get elements by {by} with value {name}')
         for _ in range(self.RETRY_COUNT):
             try:
@@ -169,4 +146,44 @@ class BaseParser:
         return []
 
 
-parser_client = BaseParser()
+class ParserPool:
+    config: Optional[ParserSettings] = None
+    pool: Optional[Queue] = None
+
+    @property
+    def is_inited(self):
+        return (
+            self.config is not None and self.pool is not None and not self.pool.empty()
+        )
+
+    def init(self, config: ParserSettings):
+        if self.is_inited:
+            logger.info('Already inited')
+            return
+
+        self.config = config
+        self.pool = Queue(maxsize=self.config.pool_size)
+
+        for _ in range(self.pool.maxsize):
+            parser = BaseParser()
+            parser.init(self.config)
+
+            self.pool.put(parser)
+
+    def close(self):
+        if not self.is_inited:
+            logger.warning('Pool is not inited')
+            return
+
+        while not self.pool.empty():
+            parser = self.pool.get()
+            parser.close_client()
+
+    def get(self) -> BaseParser:
+        return self.pool.get()
+
+    def put(self, parser: BaseParser):
+        return self.pool.put(parser)
+
+
+parser_pool = ParserPool()

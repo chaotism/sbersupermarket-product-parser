@@ -5,7 +5,6 @@ import asyncio
 import contextvars
 import time
 from functools import partial, wraps
-from itertools import count
 from typing import Callable, Coroutine, List
 
 from aiomisc import asyncretry, cancel_tasks
@@ -102,9 +101,7 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
     return retry_decorator
 
 
-async def gather_tasks(
-    tasks: List[Coroutine], timeout=10
-) -> List:  # TODO: use in background task
+async def gather_tasks(tasks: List[Coroutine], timeout=10) -> List:
     """
     Work around for running tasks in parallel and logging errors.
     """
@@ -119,6 +116,9 @@ async def gather_tasks(
             )
             continue
         success_results.append(task.result())
+    logger.debug(
+        f'Get {len(success_results)} success task with result: {success_results}'
+    )
     return success_results
 
 
@@ -140,15 +140,3 @@ def cancel_all_tasks_wrapper(
         return func(*args, **kwargs)
 
     return run
-
-
-def message_number_gen() -> Callable:  # TODO: use in background task
-    """
-    Returns increment int generator.
-    """
-    cnt = count()
-
-    def get_next_number() -> int:
-        return next(cnt)
-
-    return get_next_number
