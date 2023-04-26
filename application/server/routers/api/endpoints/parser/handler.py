@@ -24,7 +24,7 @@ async def seed_product_info(
     ]
     results = await duration_measure(gather_tasks)(
         products_seed_tasks,
-        timeout=60 * 3 * len(products_ids),
+        timeout=30 * len(products_seed_tasks),
     )  # TODO: use fastapi.BackgroundTasks
 
     return ProductInfoResponse(data=results)

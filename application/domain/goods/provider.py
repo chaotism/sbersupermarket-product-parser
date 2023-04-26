@@ -7,11 +7,11 @@ from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Optional, Generator
 
+from bs4 import BeautifulSoup, Tag
 from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
 from pydantic import ValidationError
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 
 from clients.parser import BaseParser, ParserPool
 from common.errors import ProviderError
@@ -37,11 +37,14 @@ class SberSuperMarketProvider(Provider):
     Provider interface class.
     """
 
-    product_name_path = {By.CLASS_NAME: 'pdp-header__title', By.XPATH: '//header/h1'}
+    product_name_path = {
+        By.CLASS_NAME: 'pdp-header__title',
+        # By.XPATH: '//header/h1'
+    }
     product_description_path = {By.CLASS_NAME: 'product-description'}
     product_price_path = {By.CLASS_NAME: 'pdp-sales-block__price-final'}
     product_images_path = {
-        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
+        # By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
         By.CLASS_NAME: 'slide__image',
     }
     product_specs_names_path = {By.CLASS_NAME: 'pdp-specs__item-name'}
@@ -71,15 +74,15 @@ class SberSuperMarketProvider(Provider):
         Get product entity by product id sync version.
         """
         with self._get_parser() as parser:
-            self._get_product_page(product_id, parser)
-            # TODO: Sometimes drives go down - maybe better decision to use BeautifulSoup with self.parser.page_source
+            data = self._get_product_page(product_id, parser)
+
             logger.info(f'Start getting info for product with product id: {product_id}')
-            name = self._get_product_name(parser)
-            description = self._get_product_description(parser)
-            price = self._get_product_price(parser)
-            images = self._get_product_images(parser)
-            specifications = self._get_product_specifications(parser)
-            categories = self._get_product_categories(parser)
+            name = self._get_product_name(data, parser)
+            description = self._get_product_description(data, parser)
+            price = self._get_product_price(data, parser)
+            images = self._get_product_images(data, parser)
+            specifications = self._get_product_specifications(data, parser)
+            categories = self._get_product_categories(data, parser)
 
             return self._make_product_entity(
                 product_id=product_id,
@@ -134,16 +137,9 @@ class SberSuperMarketProvider(Provider):
             raise ProviderError(f'Product data for product id: {product_id} is empty')
         return product
 
-    @staticmethod
-    def _get_elements_data(
-        path_dict: dict[By, str], parser: BaseParser
-    ) -> list[WebElement]:
-        for key, value in path_dict.items():
-            if data := parser.get_elements(by=key, name=value):
-                return data
-        return []
-
-    def _get_product_page(self, product_id: ProductID, parser: BaseParser):
+    def _get_product_page(
+        self, product_id: ProductID, parser: BaseParser
+    ) -> BeautifulSoup:
         """
         Get product page entity by product id.
         """
@@ -151,68 +147,82 @@ class SberSuperMarketProvider(Provider):
             HttpUrl,
             urllib.parse.urljoin(str(self.base_url), f'catalog/?q={product_id}'),
         )
-        parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
-        return parser
+        return parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
 
-    def _get_product_name(self, parser: BaseParser) -> ProductName:
+    @staticmethod
+    def _get_elements_data(
+        path_dict: dict[By, str], data: BeautifulSoup, parser: BaseParser
+    ) -> list[Tag]:
+        for key, value in path_dict.items():
+            if data := parser.get_elements(by=key, name=value, data=data):
+                return data
+        return []
+
+    def _get_product_name(self, data: BeautifulSoup, parser: BaseParser) -> ProductName:
         """
         Get product name.
         """
-        if name_data := self._get_elements_data(self.product_name_path, parser):
-            return ProductName(name_data[0].text)
+        if name_data := self._get_elements_data(self.product_name_path, data, parser):
+            return ProductName(name_data[0].get_text(strip=True))
         return ProductName('')
 
-    def _get_product_description(self, parser: BaseParser) -> str:
+    def _get_product_description(self, data: BeautifulSoup, parser: BaseParser) -> str:
         """
         Get product description.
         """
         if description_data := self._get_elements_data(
-            self.product_description_path, parser
+            self.product_description_path, data, parser
         ):
-            return description_data[0].text
+            return description_data[0].get_text(strip=True)
         return ''
 
-    def _get_product_price(self, parser: BaseParser) -> str:
+    def _get_product_price(self, data: BeautifulSoup, parser: BaseParser) -> str:
         """
         Get product description.
         """
-        if price_data := self._get_elements_data(self.product_price_path, parser):
-            price = price_data[0].text.replace(' ', '').replace('₽', '')
+        if price_data := self._get_elements_data(self.product_price_path, data, parser):
+            price = price_data[0].get_text(strip=True).replace(' ', '').replace('₽', '')
             return price if price else '0'
         return '0'
 
-    def _get_product_images(self, parser: BaseParser) -> list[dict[str, str]]:
+    def _get_product_images(
+        self, data: BeautifulSoup, parser: BaseParser
+    ) -> list[dict[str, str]]:
         """
         Get product images.
         """
-        if images_data := self._get_elements_data(self.product_images_path, parser):
+        if images_data := self._get_elements_data(
+            self.product_images_path, data, parser
+        ):
             images = [
-                {'name': img.get_property('alt'), 'url': img.get_property('src')}
+                {'name': img.get('alt'), 'url': img.get('src')}
                 for img in images_data
-                if img.get_property('src')
+                if img.get('src')
             ]
             return images
         return []
 
-    def _get_product_specifications(self, parser: BaseParser) -> list[dict[str, str]]:
+    def _get_product_specifications(
+        self, data: BeautifulSoup, parser: BaseParser
+    ) -> list[dict[str, str]]:
         """
         Get product metadata.
         """
         if not (
             specs_names := self._get_elements_data(
-                self.product_specs_names_path, parser
+                self.product_specs_names_path, data, parser
             )
         ):
             return []
         if not (
             specs_values := self._get_elements_data(
-                self.product_specs_values_path, parser
+                self.product_specs_values_path, data, parser
             )
         ):
             return []
 
-        names = [key.text for key in specs_names]
-        values = [key.text for key in specs_values]
+        names = [key.get_text(strip=True) for key in specs_names]
+        values = [key.get_text(strip=True) for key in specs_values]
         specs_data = [
             {'name': key, 'value': value}
             for key, value in itertools.zip_longest(names, values, fillvalue='')
@@ -220,12 +230,14 @@ class SberSuperMarketProvider(Provider):
         ]
         return specs_data
 
-    def _get_product_categories(self, parser: BaseParser) -> list[CategoryName]:
+    def _get_product_categories(
+        self, data: BeautifulSoup, parser: BaseParser
+    ) -> list[CategoryName]:
         """
         Get product metadata.
         """
         if categories_data := self._get_elements_data(
-            self.product_categories_path, parser
+            self.product_categories_path, data, parser
         ):
             categories = [
                 CategoryName(category.text)
