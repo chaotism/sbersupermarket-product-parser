@@ -72,9 +72,11 @@ class ProductInfoService(Service):
     ) -> ProductEntity:
         async with self.product_repo.atomic():
             if exist_product_info := await self._get_product(product_id):
-                product_data.id = exist_product_info.get_id()
+                product_data.set_id(exist_product_info.get_id())
+                product_data.created_at = exist_product_info.created_at
                 await self.product_repo.update(product_data)
                 return product_data
+
             repo_url_id = await self.product_repo.insert(product_data)
             product_data.id = repo_url_id
             return product_data
