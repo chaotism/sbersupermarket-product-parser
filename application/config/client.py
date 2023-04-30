@@ -15,6 +15,7 @@ class ParserSettings:
     has_fast_load_strategy: bool = True
     has_proxies: bool = True
     has_random_useragent: bool = True
+    has_experimental_options: bool = False
 
 
 class SberSuperMarketParserSettings(BaseSettings):
@@ -27,4 +28,7 @@ class SberSuperMarketParserSettings(BaseSettings):
     has_proxies: bool = Field(default=False, env='SBER_PARSER_POOL_HAS_PROXY')
     has_random_useragent: bool = Field(
         default=False, env='SBER_PARSER_POOL_RANDOM_USERAGENT'
+    )
+    has_experimental_options: bool = Field(
+        default=False, env='SBER_PARSER_EXPERIMENTAL'
     )
