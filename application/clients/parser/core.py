@@ -88,9 +88,9 @@ class BaseParser:
         self.config = config
         client = get_web_driver(
             headless=config.has_headless,
-            page_load_strategy=LoadStrategies.NONE
-            if config.has_fast_load_strategy
-            else None,
+            page_load_strategy=(
+                LoadStrategies.NONE if config.has_fast_load_strategy else None
+            ),
             useragent=get_useragent() if config.has_random_useragent else None,
             proxy=get_proxy() if config.has_proxies else None,
         )

@@ -8,11 +8,11 @@ services:
     environment:
       API_HOST: "0.0.0.0"
       API_PORT: "8888"
-      POSTGRES_DB: "srv_marketplaces"
-      POSTGRES_USER: "srv_marketplaces"
-      POSTGRES_PASSWORD: "look_in_vault"
-      POSTGRES_HOST: "127.0.0.1"
-      POSTGRES_PORT: "5432"
+      DB_DATABASE: "srv_marketplaces"
+      DB_USER: "srv_marketplaces"
+      DB_PASSWORD: "look_in_vault"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
     env_file:
       - ../.env
     ports:
