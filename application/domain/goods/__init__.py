@@ -1,5 +1,5 @@
 from .entities import ProductEntity
-from .repositories import MotorProductRepository, ProductRepository
+from .repositories import GinoProductRepository, ProductRepository
 from .servicies import ProductInfoService
-from .types import CategoryName, ProductName, ProductID
-from .provider import Provider, SberSuperMarketProvider
+from .types import CategoryName, ProductName, GoodsID
+from .provider import ProductProvider, SberSuperMarketProductProvider

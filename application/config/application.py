@@ -1,11 +1,10 @@
-"""Config of apps"""
+"""Config for app"""
 from pydantic import BaseSettings, Field
 
 
 class ApplicationSettings(BaseSettings):
-    """Application env values"""
+    """Base application settings"""
 
-    is_test: bool = Field(True, env='API_TEST')
     is_debug: bool = Field(True, env='API_DEBUG')
 
     host: str = Field('0.0.0.0', env='API_HOST')

@@ -8,18 +8,19 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from domain.types import PDObjectId
+from common.utils import utc_now
+from domain.types import IntId
 
 
 class EncodedModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         allow_population_by_field_name = True
+        orm_mode = True
         json_encoders = (
             {  # possible to remove and use jsonable_encoder from fastapi.encoders
                 UUID: str,
                 ObjectId: str,
-                PDObjectId: str,
                 datetime: lambda dt: dt.isoformat(),
                 date: lambda d: d.isoformat(),
                 time: lambda t: t.isoformat(),
@@ -35,18 +36,24 @@ class EncodedModel(BaseModel):
 
 
 class Entity(EncodedModel):
-    id: Optional[PDObjectId] = Field(alias='_id')
-    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.utcnow())
-    modified_at: Optional[datetime] = Field(default_factory=lambda: datetime.utcnow())
+    id: Optional[IntId] = Field(description='local storage Id')
+    created_at: Optional[datetime] = Field(default_factory=utc_now)
+    modified_at: Optional[datetime] = Field(default_factory=utc_now)
 
     def get_id(self):
         return self.id
 
-    def set_id(self, id: PDObjectId):
-        self.id = id
+    def set_id(self, id_: IntId):
+        self.id = id_
 
     def set_modified_at(self):
-        self.modified_at = datetime.utcnow()
+        self.modified_at = utc_now()
+
+    def update(self, instance: BaseModel):
+        self_data = self.dict()
+        self_data.update(instance.dict(exclude_none=True))
+        self.__init__(**self_data)
+        self.set_modified_at()
 
     def dict(self, *args, **kwargs):
         hidden_fields = {

@@ -1,8 +1,8 @@
-"""Config of apps"""
+"""Config for sentry"""
 from pydantic import BaseSettings, Field
 
 
 class SentrySettings(BaseSettings):
-    """Application env values"""
+    """Base sentry settings"""
 
     dsn: str = Field('', env='SENTRY_DSN')
