@@ -2,7 +2,7 @@
 
 `application/main_web.py` file for start server instead `uvicorn` load.
 `application/common` folder for common stuff like utils, constants, etc.
-`application/dbs` folder for db adapters.
+`application/storages` folder for db adapters.
 `application/domain` folder for business logic of application.
 `application/server` folder for web server logic of application.
 `tests` folder for tests.
