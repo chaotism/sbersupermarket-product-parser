@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+FROM ultrafunk/undetected-chromedriver:3.20-chrome-lateinstall
 
 ENV SERVICE_NAME "sbersupermarket-parser"
 ENV USER_HOME "/opt/$SERVICE_NAME"
@@ -12,6 +12,7 @@ COPY ./  $USER_HOME
 # Install application dependencies TODO: add pip clear cache command
 WORKDIR $USER_HOME
 RUN set -ex && make init
+
 
 # Run application
 WORKDIR $APP_PATH
