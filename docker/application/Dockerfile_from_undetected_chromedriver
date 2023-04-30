@@ -1,0 +1,18 @@
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+
+ENV SERVICE_NAME "sbersupermarket-parser"
+ENV USER_HOME "/opt/$SERVICE_NAME"
+ENV APP_PATH "$USER_HOME/application"
+
+# Copy application
+RUN set -ex && \
+    mkdir -p  $USER_HOME
+COPY ./  $USER_HOME
+
+# Install application dependencies TODO: add pip clear cache command
+WORKDIR $USER_HOME
+RUN set -ex && make init
+
+# Run application
+WORKDIR $APP_PATH
+CMD [ "sh", "-c", "poetry run python3 start_server.py"]
