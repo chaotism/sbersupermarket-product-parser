@@ -1,12 +1,38 @@
 Small project for scrapping sberbank product data. Written with fast-api and ddd paradigm.
 
+# Installation
+make init
 
-# Run from root folder
-docker-compose  -f docker/docker-compose-dev.yml up
+
+# Run
+make run
 
 
-# Additional docs here
-`docs/index.md`
+# Test
+make test
+
+
+# Migration
+make db_make_migration
+make db_migrate
+
+
+# Compose run
+make compose_build
+make compose_up
+
+
+# The project structure
+
+`application/main_web.py` file for start server instead `uvicorn` load.
+`application/clients` folder for external data resource clients.
+`application/common` folder for common stuff like utils, constants, etc.
+`application/domain` folder for business logic of application.
+`application/infrastructure` folder for infrastructure stuff like health checks etc.
+`application/storages` folder for db adapters.
+`application/web` folder for web server logic of application.
+`tests` folder for tests.
+
 
 # Plans
 ## Close plans

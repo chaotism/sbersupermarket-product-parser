@@ -39,7 +39,7 @@ compose_stop:
 	docker-compose -f docker/docker-compose-dev.yml stop
 
 compose_destroy:
-	docker-compose -f docker/docker-compose-dev.yml down
+	docker-compose -f docker/docker-compose-dev.yml down  -v --rmi all --remove-orphans
 
 compose_shell:
 	docker-compose -f docker/docker-compose-dev.yml run --rm api bash
