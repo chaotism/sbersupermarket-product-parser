@@ -47,8 +47,8 @@ class SberSuperMarketProductProvider(ProductProvider):
     product_description_path: dict[By, str] = {By.CLASS_NAME: 'product-description'}
     product_price_path: dict[By, str] = {By.CLASS_NAME: 'pdp-sales-block__price-final'}
     product_images_path: dict[By, str] = {
-        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
         By.CLASS_NAME: 'slide__image',
+        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
     }
     product_specs_names_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-name'}
     product_specs_values_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-value'}
