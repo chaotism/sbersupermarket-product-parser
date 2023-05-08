@@ -68,9 +68,11 @@ class SberSuperMarketProductProvider(ProductProvider):
 
     @contextmanager
     def _get_parser(self) -> Generator[BaseParser, None, None]:
-        parser = self.parser_pool.get()
-        yield parser
-        self.parser_pool.put(parser)
+        try:
+            parser = self.parser_pool.get()
+            yield parser
+        finally:
+            self.parser_pool.put(parser)
 
     def _get_product(self, goods_id: GoodsID) -> ProductEntity:
         """
