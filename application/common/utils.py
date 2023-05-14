@@ -9,6 +9,7 @@ from itertools import count
 from typing import Callable, Coroutine, List
 
 from aiomisc import asyncretry, cancel_tasks
+from retry import retry
 from loguru import logger
 
 from common.constants import INFINITY
@@ -72,15 +73,26 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
         exceptions = (exceptions,)
 
     def retry_decorator(func: Callable):
-        @asyncretry(max_tries=max_tries, exceptions=exceptions, **kwargs)
-        async def log_exception(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except Exception as ex:
-                logger.error(
-                    f'Function {func.__name__} raised exception {ex.__class__.__name__}({ex}). Restarting'
-                )
-                raise
+        if not asyncio.iscoroutinefunction(func):
+            @retry(tries=max_tries, exceptions=exceptions, **kwargs)
+            def log_exception(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as ex:
+                    logger.error(
+                        f'Function {func.__name__} raised exception {ex.__class__.__name__}({ex}). Restarting'
+                    )
+                    raise
+        else:
+            @asyncretry(max_tries=max_tries, exceptions=exceptions, **kwargs)
+            async def log_exception(*args, **kwargs):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as ex:
+                    logger.error(
+                        f'Function {func.__name__} raised exception {ex.__class__.__name__}({ex}). Restarting'
+                    )
+                    raise
 
         return log_exception
 
