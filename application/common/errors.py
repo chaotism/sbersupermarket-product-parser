@@ -31,12 +31,20 @@ class DatabaseError(ApplicationError):
     default_message = 'Database error'
 
 
+class EntityError(ApplicationError):
+    """
+    Base entity validation exception.
+    """
+
+    default_message = 'Entity error'
+
+
 class ProviderError(ApplicationError):
     """
     Base provider logic exception.
     """
 
-    default_message = 'Provider error'
+    default_message = 'ProductProvider error'
 
 
 class RepositoryError(ApplicationError):

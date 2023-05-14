@@ -9,16 +9,25 @@ check-unused-code:
 	vulture $(APP_PATH)
 
 check-mypy:
-	mypy $(APP_PATH)
+	cd $(APP_PATH) && mypy .
 
 check-pre-commit-hooks:
 	poetry run pre-commit install && poetry run pre-commit run --all-files
 
 run:
-	cd application && uvicorn server.app:app --host 0.0.0.0 --port=8888
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run python $(APP_PATH)/start_server.py && set +a
 
 test:
 	cd $(APP_PATH) && poetry run python -m pytest --cov=. --cov-report=xml --cov-append --no-cov-on-fail --verbose --color=yes $(TEST_PATH)
+
+db_make_migration:
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich migrate && set +a
+
+db_migrate:
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich upgrade && set +a
+
+db_downgrade:
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich downgrade && set +a
 
 compose_build:
 	docker-compose -f docker/docker-compose-dev.yml build
