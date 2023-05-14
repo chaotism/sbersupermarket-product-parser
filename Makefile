@@ -30,7 +30,7 @@ db_downgrade:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich downgrade && set +a
 
 compose_build:
-	docker-compose -f docker/docker-compose-dev.yml build
+	docker-compose -f docker/docker-compose-dev.yml build  --compress
 
 compose_up:
 	docker-compose -f docker/docker-compose-dev.yml up
