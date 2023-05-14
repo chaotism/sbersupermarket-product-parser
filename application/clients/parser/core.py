@@ -1,4 +1,6 @@
+from enum import Enum
 from queue import Queue
+from pathlib import Path
 from typing import Optional
 
 import undetected_chromedriver as uc
@@ -17,34 +19,47 @@ from config.client import ParserSettings
 DEFAULT_TIME_TO_WAIT = 3
 
 
+class LoadStrategies(Enum):
+    NORMAL = 'normal'  # default WebDriver waits until the load event fire is returned.
+    EAGER = 'eager'  # WebDriver waits until DOMContentLoaded event fire is returned.
+    NONE = 'none'  # WebDriver only waits until the initial page is downloaded.
+
+
 def get_web_driver(
-    headless: bool = True, proxy: Optional[str] = None, useragent: Optional[str] = None
+    headless: bool = True,
+    page_load_strategy: Optional[LoadStrategies] = None,
+    user_data_dir: Optional[Path] = None,
+    useragent: Optional[str] = None,
+    proxy: Optional[str] = None,
+    experimental_options: bool = False,
 ) -> uc.Chrome:
     options = uc.ChromeOptions()
-    # options.user_data_dir = Path(
-    #     BASE_PATH, 'var', 'chrome_userdata'
-    # )  # TODO: generate user data
+
     if headless:
         options.add_argument('--headless')
+    if page_load_strategy:
+        options.page_load_strategy = page_load_strategy.value
 
-    # TODO:  all commented arguments would break chrome driver or make it detectable
-    # if proxy:
-    #     options.add_argument(f'--proxy-server={proxy}')
-    # if useragent:
-    #     options.add_argument(f'--user-agent={useragent}')
+    if user_data_dir:
+        options.user_data_dir = user_data_dir
+    if useragent:
+        options.add_argument(
+            f'--user-agent={useragent}'
+        )  # could make driver detectable
+    if proxy:
+        options.add_argument(f'--proxy-web={proxy}')  # could make driver detectable
 
-    # options.add_argument('--no-sandbox')
-    # options.add_argument('--disable-setuid-sandbox')
-    # options.add_argument('--window-size=1920,1080')
-    # options.add_argument('--disable-extensions')
-    # options.add_argument('--dns-prefetch-disable')
-    # options.add_argument('--disable-gpu')
+    if experimental_options:  # TODO:  experimental_options could break chrome driver
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-setuid-sandbox')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--dns-prefetch-disable')
+        options.add_argument('--disable-gpu')
 
     chrome = uc.Chrome(options=options)
     chrome.maximize_window()
     chrome.implicitly_wait(time_to_wait=DEFAULT_TIME_TO_WAIT)
-    # chrome.set_page_load_timeout(time_to_wait=DEFAULT_TIME_TO_WAIT)
-    # assert chrome.is_connectable()
     return chrome
 
 
@@ -73,6 +88,9 @@ class BaseParser:
         self.config = config
         client = get_web_driver(
             headless=config.has_headless,
+            page_load_strategy=LoadStrategies.NONE
+            if config.has_fast_load_strategy
+            else None,
             useragent=get_useragent() if config.has_random_useragent else None,
             proxy=get_proxy() if config.has_proxies else None,
         )
@@ -88,7 +106,7 @@ class BaseParser:
             return
         logger.info('Start closing client...')
         try:
-            self.client.close()  # FIXME: regular error with losing connection with dev tool
+            self.client.close()
         except WebDriverException as err:
             logger.warning(f'Get problem with closing chrome driver: {str(err)}')
             if 'failed to check if window was closed' not in str(err):

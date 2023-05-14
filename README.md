@@ -10,15 +10,16 @@ docker-compose  -f docker/docker-compose-dev.yml up
 
 # Plans
 ## Close plans
-- add supporting sql databases
-- add health check db and client
+- add CI
+- clear commit history
 - add cache
 - add mypy to git-commit hooks (need fix issues)
 - migrate to python 3.11
 - use to python 3.11
 - use similar to https://hub.docker.com/r/ultrafunk/undetected-chromedriver docker container but much more thin
+- check docker build logic
 - fix TODOS
-- check chromedrive and chrome versions for compatibility
+
 
 ## Future Plans
 - add try to different url upload policies (normal: This strategy causes Selenium to wait for the full page loading (html content and sub resources downloaded and parsed).

@@ -3,15 +3,21 @@ Collection for common help function in project.
 """
 import asyncio
 import contextvars
+from datetime import datetime
 import time
 from functools import partial, wraps
 from typing import Callable, Coroutine, List
 
+import pytz
 from aiomisc import asyncretry, cancel_tasks
 from retry import retry
 from loguru import logger
 
 from common.constants import INFINITY
+
+
+def utc_now() -> datetime:
+    return datetime.now(tz=pytz.timezone('UTC'))
 
 
 def async_wrapper(func: Callable) -> Callable:

@@ -1,4 +1,9 @@
 from bson import ObjectId
+from pydantic import PositiveInt
+
+
+class IntId(PositiveInt):
+    pass
 
 
 class PDObjectId(ObjectId):
@@ -22,6 +27,10 @@ class DAO:
 
 
 class Service:
+    pass
+
+
+class Provider:
     pass
 
 

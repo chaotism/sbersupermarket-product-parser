@@ -2,33 +2,37 @@ from decimal import Decimal
 
 from pydantic import HttpUrl, Field
 
-from .types import ProductID, ProductName, CategoryName
+from .types import GoodsID, ProductName
 from ..entities import Entity, EncodedModel
 
 
+class ProductAttribute(EncodedModel):
+    name: str = Field(max_length=256)
+    value: str = Field(max_length=1024)
+
+
+class ProductCategory(EncodedModel):
+    name: ProductName
+
+
 class ProductImage(EncodedModel):
-    name: str
+    name: str = Field(max_length=256)
     url: HttpUrl
 
 
-class ProductAttribute(EncodedModel):
-    name: str
-    value: str
-
-
 class ProductEntity(Entity):
-    product_id: ProductID = Field(description='Штрихкод')
+    goods_id: GoodsID = Field(description='Штрихкод')
     name: ProductName
     price: Decimal
 
-    categories: list[CategoryName]
+    categories: list[ProductCategory]
     images: list[ProductImage]
-    specifications: list[ProductAttribute]
+    attributes: list[ProductAttribute]
 
     @property
     def is_empty(self) -> bool:
         if not any(
-            [self.name, self.price, self.categories, self.images, self.specifications]
+            [self.name, self.price, self.categories, self.images, self.attributes]
         ):
             return True
         return False
