@@ -85,7 +85,9 @@ class BaseParser:
     def is_inited(self):
         return self.config is not None and self.client is not None
 
-    @retry_by_exception(exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3)
+    @retry_by_exception(
+        exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3
+    )
     def init(self, config: ParserSettings):
         if self.is_inited:
             logger.info('Already inited')
@@ -100,13 +102,20 @@ class BaseParser:
         self.client = client
         logger.info('Chrome client ready')
 
-    @retry_by_exception(exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3)
+    @retry_by_exception(
+        exceptions=(WebDriverException, TimeoutException, TimeoutError), max_tries=3
+    )
     def close_client(self):  # TODO: migrate to pool
         if not self.is_inited:
             logger.warning('Chrome client is not inited')
             return
         logger.info('Start closing client...')
-        self.client.close()
+        try:
+            self.client.close()  # FIXME: regular error with losing connection with dev tool
+        except WebDriverException as err:
+            logger.warning(f'Get problem with closing chrome driver: {str(err)}')
+            if 'failed to check if window was closed' not in str(err):
+                raise
         self.client.quit()
         logger.info('Client closed')
         self.client = None
