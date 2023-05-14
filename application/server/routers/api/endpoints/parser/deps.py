@@ -1,5 +1,5 @@
 from dbs.mongo import get_mongo_client, get_mongo_db
-from clients import parser_client
+from clients import parser_pool
 from domain.goods import (
     MotorProductRepository,
     SberSuperMarketProvider,
@@ -14,6 +14,6 @@ async def get_product_parser_service() -> ProductInfoService:
     return ProductInfoService(
         product_repo=MotorProductRepository(client=client, db=db),
         product_provider=SberSuperMarketProvider(
-            parser=parser_client, base_url=parser_config.url
+            parser_pool=parser_pool, base_url=parser_config.url
         ),
     )

@@ -11,6 +11,7 @@ docker-compose  -f docker/docker-compose-dev.yml up
 # Plans
 ## Close plans
 add supporting sql databases
+add health check db and client
 add cache
 add mypy to git-commit hooks (need fix issues)
 migrate to python 3.11
