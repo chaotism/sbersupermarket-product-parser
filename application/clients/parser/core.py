@@ -50,6 +50,7 @@ def get_web_driver(
         options.add_argument(f'--proxy-web={proxy}')  # could make driver detectable
 
     if experimental_options:  # TODO:  experimental_options could break chrome driver
+        options.add_argument('--single-process')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-setuid-sandbox')
         options.add_argument('--window-size=1920,1080')
@@ -93,6 +94,7 @@ class BaseParser:
             ),
             useragent=get_useragent() if config.has_random_useragent else None,
             proxy=get_proxy() if config.has_proxies else None,
+            experimental_options=config.has_experimental_options,
         )
         self.client = client
         logger.info('Chrome client ready')
