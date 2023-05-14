@@ -19,7 +19,7 @@ class ProductInfoService(Service):
         self.product_repo = product_repo
         self.product_provider = product_provider
 
-    async def register_provider_product_info(  # TODO: add seed products
+    async def register_provider_product_info(
         self, product_id: ProductID
     ) -> ProductEntity:
         try:
@@ -27,20 +27,11 @@ class ProductInfoService(Service):
         except ProviderError as err:
             logger.warning(f'Get provider error {err} for product id {product_id} ')
             raise NotFoundError(f'Cannot find information for product id: {product_id}')
-        id_ = await self.product_repo.insert(product_data)
-        product_db_data = await self.product_repo.get_by_id(id_)
-        return product_db_data
 
-    async def find_category_products(
-        self, category: CategoryName
-    ) -> list[ProductEntity]:
-        products = await self.product_repo.find_by_category(category)
-        if not products:
-            return []
-        return products
+        return await self._update_product(product_id, product_data)
 
     @duration_measure
-    async def get_product(self, product_id: ProductID) -> Optional[ProductEntity]:
+    async def get_product_info(self, product_id: ProductID) -> Optional[ProductEntity]:
         products = await self.product_repo.find_by_product_id(product_id)
         logger.debug(f'Get {products} by key {product_id}')
         if not products:
@@ -55,13 +46,46 @@ class ProductInfoService(Service):
             )
         return products[0]
 
-    async def remove_product(
+    async def find_category_products(  # FIXME: didn't work
+        self, category: CategoryName
+    ) -> list[ProductEntity]:
+        products = await self.product_repo.find_by_category(category)
+        if not products:
+            return []
+        return products
+
+    async def _get_product(self, product_id: ProductID) -> Optional[ProductEntity]:
+        products = await self.product_repo.find_by_product_id(product_id)
+        logger.debug(f'Get {products} by key {product_id}')
+        if not products:
+            return None
+        if len(products) > 1:
+            raise ServiceError(
+                f'Find more than one product by product_id {product_id}: {products}'
+            )
+        return products[0]
+
+    async def _update_product(
+        self,
+        product_id: ProductID,
+        product_data: ProductEntity,
+    ) -> ProductEntity:
+        async with self.product_repo.atomic():  # TODO: make it simpler / move to method
+            if exist_product_info := await self._get_product(product_id):
+                product_data.id = exist_product_info.get_id()
+                await self.product_repo.update(product_data)
+                return product_data
+            repo_url_id = await self.product_repo.insert(product_data)
+            product_data.id = repo_url_id
+            return product_data
+
+    async def _remove_product(
         self, product_id: ProductID
     ) -> Optional[ProductEntity]:  # TODO: not used
-        products = await self.get_product(product_id)
+        products = await self._get_product(product_id)
         if not products:
             return None
         await self.product_repo.delete(products.get_id())
 
-    async def have_products(self) -> bool:  # TODO: not used
+    async def _have_products(self) -> bool:  # TODO: not used
         return await self.product_repo.get_count() > 0

@@ -102,9 +102,7 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
     return retry_decorator
 
 
-async def gather_tasks(
-    tasks: List[Coroutine], timeout=10
-) -> List:  # TODO: use in background task
+async def gather_tasks(tasks: List[Coroutine], timeout=10) -> List:
     """
     Work around for running tasks in parallel and logging errors.
     """
@@ -119,6 +117,9 @@ async def gather_tasks(
             )
             continue
         success_results.append(task.result())
+    logger.debug(
+        f'Get {len(success_results)} success task with result: {success_results}'
+    )
     return success_results
 
 
