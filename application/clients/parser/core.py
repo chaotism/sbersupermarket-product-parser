@@ -121,7 +121,7 @@ class BaseParser:
             try:
                 self.client.get(url)
                 return self.client
-            except (WebDriverException, TimeoutException) as err:
+            except (WebDriverException, TimeoutException, TimeoutError) as err:
                 logger.warning(
                     f'Get webdriver exception {str(err)} try to restart client'
                 )
