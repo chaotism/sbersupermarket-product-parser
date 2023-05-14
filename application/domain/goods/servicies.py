@@ -70,7 +70,7 @@ class ProductInfoService(Service):
         product_id: ProductID,
         product_data: ProductEntity,
     ) -> ProductEntity:
-        async with self.product_repo.atomic():  # TODO: make it simpler / move to method
+        async with self.product_repo.atomic():
             if exist_product_info := await self._get_product(product_id):
                 product_data.id = exist_product_info.get_id()
                 await self.product_repo.update(product_data)
@@ -81,11 +81,11 @@ class ProductInfoService(Service):
 
     async def _remove_product(
         self, product_id: ProductID
-    ) -> Optional[ProductEntity]:  # TODO: not used
+    ) -> Optional[ProductEntity]:  # FIXME: not used
         products = await self._get_product(product_id)
         if not products:
             return None
         await self.product_repo.delete(products.get_id())
 
-    async def _have_products(self) -> bool:  # TODO: not used
+    async def _have_products(self) -> bool:  # FIXME: not used
         return await self.product_repo.get_count() > 0
