@@ -4,12 +4,21 @@ will run your application with this file.
 """
 import sentry_sdk
 import uvicorn
-from config import application_config, mongodb_config, openapi_config, sentry_config
-from dbs import mongo_adapter
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from loguru import logger
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
+from clients import parser_client
+from common.utils import async_wrapper
+from config import (
+    application_config,
+    mongodb_config,
+    parser_config,
+    openapi_config,
+    sentry_config,
+)
+from dbs import mongo_adapter
 from server.core.exceptions import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTPException,
@@ -48,11 +57,13 @@ logger.success('Successfully initialized!')
 async def startup():
     await mongo_adapter.init(mongodb_config)
     await mongo_adapter.auth_mongo()
+    await async_wrapper(parser_client.init)(parser_config)
 
 
 @app.on_event('shutdown')
 async def shutdown():
     await mongo_adapter.close_connections()
+    await async_wrapper(parser_client.close_client)()
 
 
 @app.get('/')
