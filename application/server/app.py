@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 from loguru import logger
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-from clients import parser_client
+from clients import parser_pool
 from common.utils import async_wrapper
 from config import (
     application_config,
@@ -57,13 +57,13 @@ logger.success('Successfully initialized!')
 async def startup():
     await mongo_adapter.init(mongodb_config)
     await mongo_adapter.auth_mongo()
-    await async_wrapper(parser_client.init)(parser_config)
+    await async_wrapper(parser_pool.init)(parser_config)
 
 
 @app.on_event('shutdown')
 async def shutdown():
     await mongo_adapter.close_connections()
-    await async_wrapper(parser_client.close_client)()
+    await async_wrapper(parser_pool.close)()
 
 
 @app.get('/')

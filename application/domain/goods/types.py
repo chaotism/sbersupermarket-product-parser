@@ -24,7 +24,7 @@ class ProductName(str):
         )
 
 
-class CategoryName(str):  # TODO: copypaste
+class CategoryName(str):
     max_length = 1024
 
     @classmethod

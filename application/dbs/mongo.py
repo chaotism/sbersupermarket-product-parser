@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 
 class MongoMotorAdapter:
-    config: Optional[MongodbSettings] = None  # TODO: could remove (its for debug only)
+    config: Optional[MongodbSettings] = None
     client: Optional[AsyncIOMotorClient] = None
     db: Optional[AsyncIOMotorDatabase] = None
 
