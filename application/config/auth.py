@@ -1,4 +1,4 @@
-"""Config of auth"""
+"""Config for auth"""
 from typing import List, Optional
 
 from pydantic import BaseSettings, Field
@@ -7,6 +7,8 @@ AUTH_TOKEN_KEY_NAME = 'Auth-Token'
 
 
 class AuthSettings(BaseSettings):
+    """Base auth settings"""
+
     auth_token_key_name: str = AUTH_TOKEN_KEY_NAME
     tokens: str = Field('', env='TOKENS')
     tokens_list: Optional[List[str]] = []

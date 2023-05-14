@@ -1,25 +1,36 @@
 version: "3"
 services:
-  mongodb:
-    image: "mongo:4.4.2-bionic"
-#    command: mongod --logpath=/dev/null
-    ports:
-      - "9999:27017"
-#    volumes:
-#      - "../var/mongo-data/:/data/db"
   api:
     build:
       context: ../
       dockerfile: ./docker/application/Dockerfile
-    command: poetry run python3 main_web.py
+    command: poetry run python3 start_server.py
     environment:
-      MONGO_URI: "mongodb://mongodb:27017"
       API_HOST: "0.0.0.0"
       API_PORT: "8888"
+      DB_DATABASE: "srv_marketplaces"
+      DB_USER: "srv_marketplaces"
+      DB_PASSWORD: "look_in_vault"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      SBER_PARSER_POOL_SIZE: 1
+      SBER_PARSER_POOL_FASTLOAD: TRUE
+      SBER_SUPERMARKET_URI: "https://sbermegamarket.ru"
     env_file:
       - ../.env
     ports:
       - "8888:8888"
     restart: always
     depends_on:
-      - mongodb
+      - postgres
+
+  postgres:
+    container_name: postgres
+    image: registry.tochka-tech.com/proxy_docker-io/library/postgres:14.5-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: "srv_marketplaces"
+      POSTGRES_USER: "srv_marketplaces"
+      POSTGRES_PASSWORD: "look_in_vault"
+    ports:
+      - "5432:5432"

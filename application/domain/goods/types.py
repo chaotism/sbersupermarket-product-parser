@@ -1,6 +1,6 @@
 from typing import NewType
 
-ProductID = NewType('ProductID', str)
+GoodsID = NewType('GoodsID', str)
 
 
 class ProductName(str):

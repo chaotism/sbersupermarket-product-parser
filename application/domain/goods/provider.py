@@ -17,63 +17,71 @@ from clients.parser import BaseParser, ParserPool
 from common.errors import ProviderError
 from common.utils import async_wrapper, retry_by_exception
 from .entities import ProductEntity
-from .types import ProductID, CategoryName, ProductName
+from .types import GoodsID, CategoryName, ProductName
+from ..types import Provider
 
 
-class Provider(metaclass=ABCMeta):
+class ProductProvider(Provider):
+    __metaclass__ = ABCMeta
+
     """
-    Provider interface class.
+    ProductProvider interface class.
     """
 
     @abstractmethod
-    async def get_product(self, product_id: ProductID) -> ProductEntity:
+    async def get_product(self, goods_id: GoodsID) -> ProductEntity:
         """
-        Get product data entity by product id.
+        Get product data entity by goods id.
         """
 
 
-class SberSuperMarketProvider(Provider):
+class SberSuperMarketProductProvider(ProductProvider):
     """
-    Provider interface class.
+    ProductProvider interface class.
     """
 
-    product_name_path = {By.CLASS_NAME: 'pdp-header__title', By.XPATH: '//header/h1'}
-    product_description_path = {By.CLASS_NAME: 'product-description'}
-    product_price_path = {By.CLASS_NAME: 'pdp-sales-block__price-final'}
-    product_images_path = {
-        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
-        By.CLASS_NAME: 'slide__image',
+    product_name_path: dict[By, str] = {
+        By.CLASS_NAME: 'pdp-header__title',
+        By.XPATH: '//header/h1',
     }
-    product_specs_names_path = {By.CLASS_NAME: 'pdp-specs__item-name'}
-    product_specs_values_path = {By.CLASS_NAME: 'pdp-specs__item-value'}
-    product_categories_path = {By.CLASS_NAME: 'breadcrumb-item'}
+    product_description_path: dict[By, str] = {By.CLASS_NAME: 'product-description'}
+    product_price_path: dict[By, str] = {By.CLASS_NAME: 'pdp-sales-block__price-final'}
+    product_images_path: dict[By, str] = {
+        By.CLASS_NAME: 'slide__image',
+        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
+    }
+    product_specs_names_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-name'}
+    product_specs_values_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-value'}
+    product_categories_path: dict[By, str] = {By.CLASS_NAME: 'breadcrumb-item'}
 
     def __init__(self, parser_pool: ParserPool, base_url: HttpUrl) -> None:
         self.parser_pool = parser_pool
         self.base_url = base_url
 
-    async def get_product(self, product_id: ProductID) -> ProductEntity:
+    async def get_product(self, goods_id: GoodsID) -> ProductEntity:
         """
-        Get product entity by product id.
+        Get product entity by goods id.
         """
         return await retry_by_exception(exceptions=ProviderError, max_tries=3)(
             async_wrapper(self._get_product)
-        )(product_id)
+        )(goods_id)
 
     @contextmanager
     def _get_parser(self) -> Generator[BaseParser, None, None]:
-        parser = self.parser_pool.get()
-        yield parser
-        self.parser_pool.put(parser)
+        try:
+            parser = self.parser_pool.get()
+            yield parser
+        finally:
+            self.parser_pool.put(parser)
 
-    def _get_product(self, product_id: ProductID) -> ProductEntity:
+    def _get_product(self, goods_id: GoodsID) -> ProductEntity:
         """
-        Get product entity by product id sync version.
+        Get product entity by goods id sync version.
         """
         with self._get_parser() as parser:
-            self._get_product_page(product_id, parser)
+            self._get_product_page(goods_id, parser)
             # TODO: Sometimes drives go down - maybe better decision to use BeautifulSoup with self.parser.page_source
-            logger.info(f'Start getting info for product with product id: {product_id}')
+            logger.info(f'Start getting info for product with goods id: {goods_id}')
             name = self._get_product_name(parser)
             description = self._get_product_description(parser)
             price = self._get_product_price(parser)
@@ -82,7 +90,7 @@ class SberSuperMarketProvider(Provider):
             categories = self._get_product_categories(parser)
 
             return self._make_product_entity(
-                product_id=product_id,
+                goods_id=goods_id,
                 name=name,
                 description=description,
                 price=price,
@@ -93,29 +101,29 @@ class SberSuperMarketProvider(Provider):
 
     @staticmethod
     def _make_product_entity(
-        product_id: ProductID,
+        goods_id: GoodsID,
         name: Optional[ProductName],
         description: Optional[str],
         price: Optional[str],
         images: list[dict[str, str]],
         specifications: list[dict[str, str]],
-        categories: list[CategoryName],
+        categories: list[dict[str, str]],
     ) -> ProductEntity:
         try:
             product = ProductEntity(
-                product_id=product_id,
+                goods_id=goods_id,
                 name=name,
                 description=description,
                 price=price,
                 images=images,
-                specifications=specifications,
+                attributes=specifications,
                 categories=categories,
             )
         except ValidationError as err:
             logger.warning(
                 f"""Get exception for ProductEntity {err}, with data: {
                         dict(
-                            product_id=product_id,
+                            goods_id=goods_id,
                             name=name,
                             description=description,
                             price=price,
@@ -128,10 +136,10 @@ class SberSuperMarketProvider(Provider):
             )
             raise ProviderError from err
         logger.debug(
-            f'Got getting info for product with product id {product_id}: \n {product.json()}'
+            f'Got getting info for product with goods id {goods_id}: \n {product.json()}'
         )
         if product.is_empty:
-            raise ProviderError(f'Product data for product id: {product_id} is empty')
+            raise ProviderError(f'Product data for goods id: {goods_id} is empty')
         return product
 
     @staticmethod
@@ -143,13 +151,13 @@ class SberSuperMarketProvider(Provider):
                 return data
         return []
 
-    def _get_product_page(self, product_id: ProductID, parser: BaseParser):
+    def _get_product_page(self, goods_id: GoodsID, parser: BaseParser):
         """
-        Get product page entity by product id.
+        Get product page entity by goods id.
         """
         product_data_url = parse_obj_as(
             HttpUrl,
-            urllib.parse.urljoin(str(self.base_url), f'catalog/?q={product_id}'),
+            urllib.parse.urljoin(str(self.base_url), f'catalog/?q={goods_id}'),
         )
         parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
         return parser
@@ -220,7 +228,7 @@ class SberSuperMarketProvider(Provider):
         ]
         return specs_data
 
-    def _get_product_categories(self, parser: BaseParser) -> list[CategoryName]:
+    def _get_product_categories(self, parser: BaseParser) -> list[dict[str, str]]:
         """
         Get product metadata.
         """
@@ -228,7 +236,7 @@ class SberSuperMarketProvider(Provider):
             self.product_categories_path, parser
         ):
             categories = [
-                CategoryName(category.text)
+                {'name': CategoryName(category.text)}
                 for category in categories_data
                 if category.text
             ]
