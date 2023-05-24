@@ -14,19 +14,21 @@ services:
       DB_HOST: "postgres"
       DB_PORT: "5432"
       SBER_PARSER_POOL_SIZE: 1
-      SBER_PARSER_POOL_FASTLOAD: TRUE
+      SBER_PARSER_POOL_FASTLOAD: "TRUE"
       SBER_SUPERMARKET_URI: "https://sbermegamarket.ru"
     env_file:
       - ../.env
     ports:
       - "8888:8888"
+    shm_size: "2gb"
+    mem_reservation: "2gb"
     restart: always
     depends_on:
       - postgres
 
   postgres:
     container_name: postgres
-    image: registry.tochka-tech.com/proxy_docker-io/library/postgres:14.5-alpine
+    image: postgres:12
     restart: always
     environment:
       POSTGRES_DB: "srv_marketplaces"
