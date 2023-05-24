@@ -52,13 +52,14 @@ def get_web_driver(
     if experimental_options:  # TODO:  experimental_options could break chrome driver
         options.add_argument('--single-process')
         options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-setuid-sandbox')
         options.add_argument('--window-size=1920,1080')
         options.add_argument('--disable-extensions')
         options.add_argument('--dns-prefetch-disable')
         options.add_argument('--disable-gpu')
 
-    chrome = uc.Chrome(options=options)
+    chrome = uc.Chrome(advanced_elements=True, options=options)
     chrome.maximize_window()
     chrome.implicitly_wait(time_to_wait=DEFAULT_TIME_TO_WAIT)
     return chrome

@@ -5,6 +5,10 @@ init:
 	pip install poetry
 	poetry install
 
+clear_cache:
+	poetry cache clear _default_cache --all
+	poetry cache clear pypi --all
+
 check-unused-code:
 	vulture $(APP_PATH)
 
@@ -20,26 +24,26 @@ run:
 test:
 	cd $(APP_PATH) && poetry run python -m pytest --cov=. --cov-report=xml --cov-append --no-cov-on-fail --verbose --color=yes $(TEST_PATH)
 
-db_make_migration:
+db-make-migration:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich migrate && set +a
 
-db_migrate:
+db-migrate:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich upgrade && set +a
 
-db_downgrade:
+db-downgrade:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich downgrade && set +a
 
-compose_build:
+compose-build:
 	docker-compose -f docker/docker-compose-dev.yml build  --compress
 
-compose_up:
+compose-up:
 	docker-compose -f docker/docker-compose-dev.yml up
 
-compose_stop:
+compose-stop:
 	docker-compose -f docker/docker-compose-dev.yml stop
 
-compose_destroy:
+compose-destroy:
 	docker-compose -f docker/docker-compose-dev.yml down  -v --rmi all --remove-orphans
 
-compose_shell:
+compose-shell:
 	docker-compose -f docker/docker-compose-dev.yml run --rm api bash
