@@ -1,5 +1,4 @@
 from datetime import datetime, date, time, timedelta
-from bson import ObjectId
 from decimal import Decimal
 from enum import Enum
 from types import GeneratorType
@@ -20,7 +19,6 @@ class EncodedModel(BaseModel):
         json_encoders = (
             {  # possible to remove and use jsonable_encoder from fastapi.encoders
                 UUID: str,
-                ObjectId: str,
                 datetime: lambda dt: dt.isoformat(),
                 date: lambda d: d.isoformat(),
                 time: lambda t: t.isoformat(),

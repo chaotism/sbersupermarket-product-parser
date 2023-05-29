@@ -80,5 +80,5 @@ class ProductInfoService(Service):
             )
         await self.product_repo.delete(products)
 
-    async def _have_products(self) -> bool:  # TODO: add logic for using this method
-        return await self.product_repo.get_count() > 0
+    async def count(self) -> int:
+        return await self.product_repo.get_count()
