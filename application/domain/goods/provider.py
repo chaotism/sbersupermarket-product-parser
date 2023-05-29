@@ -35,7 +35,7 @@ class ProductProvider(Provider):
         """
 
 
-class SberSuperMarketProductProvider(ProductProvider):
+class SberSuperMarketProductProviderOld(ProductProvider):
     """
     ProductProvider interface class.
     """
@@ -242,3 +242,24 @@ class SberSuperMarketProductProvider(ProductProvider):
             ]
             return categories
         return []
+
+
+class SberSuperMarketProductProvider(SberSuperMarketProductProviderOld):
+    def _get_product_page(self, goods_id: GoodsID, parser: BaseParser):
+        """
+        Get product page entity by goods id.
+        """
+        product_data_url = parse_obj_as(
+            HttpUrl,
+            str(self.base_url),
+        )
+        parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
+        search_field = parser.get_elements(by=By.CLASS_NAME, name='search-field-input')[
+            0
+        ]
+        search_field.send_keys(goods_id)
+        search_field_submit = parser.get_elements(
+            by=By.CLASS_NAME, name='header-search-form__search-button'
+        )[0]
+        search_field_submit.click()
+        return parser
