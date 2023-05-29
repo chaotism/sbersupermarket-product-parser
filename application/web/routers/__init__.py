@@ -16,7 +16,4 @@ base_router.include_router(
 base_router.include_router(
     health_router,
     prefix='/health',
-    dependencies=[
-        Depends(verify_auth_token),
-    ],
 )

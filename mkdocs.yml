@@ -1,11 +1,11 @@
-posite_name: FastAPI urlshortener
+posite_name: sbersupermarket-product-scraper
 nav:
   - Get started: docs/index.md
 theme:
-  name: 'material'
+  name: 'readthedocs'
 markdown_extensions:
   - admonition
   - codehilite
 
-repo_name: 'chaotism/url_shortener'
-repo_url: 'https://github.com/chaotism/url_shortener'
+repo_name: 'sbersupermarket-product-scraper'
+repo_url: 'https://github.com/chaotism/sbersupermarket-product-scraper'

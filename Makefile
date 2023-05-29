@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 APP_PATH=./application
 TEST_PATH=./tests
 
@@ -6,8 +8,8 @@ init:
 	poetry install
 
 clear_cache:
-	poetry cache clear _default_cache --all
-	poetry cache clear pypi --all
+	poetry cache clear _default_cache --all  -n
+	poetry cache clear pypi --all  -n
 
 check-unused-code:
 	vulture $(APP_PATH)
@@ -22,16 +24,19 @@ run:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run python $(APP_PATH)/start_server.py && set +a
 
 test:
-	cd $(APP_PATH) && poetry run python -m pytest --cov=. --cov-report=xml --cov-append --no-cov-on-fail --verbose --color=yes $(TEST_PATH)
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run python -m pytest --cov=. --cov-report=xml --cov-append --no-cov-on-fail --verbose --color=yes $(TEST_PATH)
 
 db-make-migration:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich migrate && set +a
 
 db-migrate:
-	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich upgrade && set +a
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich upgrade && set +a
 
 db-downgrade:
-	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && aerich downgrade && set +a
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich downgrade --yes -v "${MAKECMDGOALS:--1}" && set +a
+
+db-reset:
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich downgrade --yes -v 0 && set +a
 
 compose-build:
 	docker-compose -f docker/docker-compose-dev.yml build  --compress
@@ -43,7 +48,7 @@ compose-stop:
 	docker-compose -f docker/docker-compose-dev.yml stop
 
 compose-destroy:
-	docker-compose -f docker/docker-compose-dev.yml down  -v --rmi all --remove-orphans
+	docker-compose -f docker/docker-compose-dev.yml down  -v --remove-orphans
 
 compose-shell:
 	docker-compose -f docker/docker-compose-dev.yml run --rm api bash

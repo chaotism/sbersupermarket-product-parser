@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from common.utils import duration_measure, gather_tasks
 from domain.goods import CategoryName, GoodsID, ProductInfoService
 from .deps import get_product_parser_service
-from .schemas import ProductInfoResponse, ProductSeedRequest
+from .schemas import ProductSeedRequest, ProductInfoCountRequest, ProductInfoResponse
 
 router = APIRouter()
 
@@ -28,6 +28,17 @@ async def seed_product_info(
     )  # TODO: use fastapi.BackgroundTasks
 
     return ProductInfoResponse(data=results)
+
+
+@router.get('/count', response_model=ProductInfoCountRequest)
+async def get_product_info_count(
+    product_info_service: ProductInfoService = Depends(get_product_parser_service),
+) -> ProductInfoCountRequest:
+    """
+    Get a count of product info.
+    """
+    product_info_count = await product_info_service.count()
+    return ProductInfoCountRequest(count=product_info_count)
 
 
 @router.get('/category/{category_name}', response_model=ProductInfoResponse)

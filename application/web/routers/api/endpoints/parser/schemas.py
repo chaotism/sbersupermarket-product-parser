@@ -15,6 +15,10 @@ class ProductSeedRequest(BaseModel):
     data: ProductIds
 
 
+class ProductInfoCountRequest(BaseModel):
+    count: int
+
+
 # Properties to receive on getting data
 class ProductInfoRequest(BaseModel):
     goods_id: GoodsID
