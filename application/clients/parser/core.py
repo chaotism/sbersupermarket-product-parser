@@ -158,8 +158,6 @@ class BaseParser:
                 )
                 self.restart()
             except WebDriverException as err:
-                if 'unknown' not in str(err):
-                    raise
                 logger.warning(
                     f'Get webdriver exception {str(err)} try to restart client'
                 )
