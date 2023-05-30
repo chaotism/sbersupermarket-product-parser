@@ -1,6 +1,6 @@
 FROM ultrafunk/undetected-chromedriver:3.20-chrome108
 
-ENV SERVICE_NAME "sbersupermarket-parser"
+ENV SERVICE_NAME "sbermegamarket-parser"
 ENV USER_HOME "/opt/$SERVICE_NAME"
 ENV APP_PATH "$USER_HOME/application"
 

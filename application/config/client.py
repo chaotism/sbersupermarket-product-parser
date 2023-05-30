@@ -18,10 +18,10 @@ class ParserSettings:
     has_experimental_options: bool = False
 
 
-class SberSuperMarketParserSettings(BaseSettings):
-    """Sber supermarket parser env values"""
+class SberMegaMarketParserSettings(BaseSettings):
+    """Sbermegamarket parser env values"""
 
-    url: HttpUrl = Field(default=SBER_DEFAULT_URL, env='SBER_SUPERMARKET_URI')
+    url: HttpUrl = Field(default=SBER_DEFAULT_URL, env='SBER_MEGAMARKET_URI')
     pool_size: int = Field(default=DEFAULT_POOL_SIZE, env='SBER_PARSER_POOL_SIZE')
     has_headless: bool = Field(default=True, env='SBER_PARSER_POOL_HEADLESS')
     has_fast_load_strategy: bool = Field(default=True, env='SBER_PARSER_POOL_FASTLOAD')

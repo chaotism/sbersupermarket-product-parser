@@ -39,7 +39,7 @@ class ProductProvider(Provider):
         """
 
 
-class SberSuperMarketProductProviderUrlSearch(ProductProvider):
+class SberMegaMarketProductProviderUrlSearch(ProductProvider):
     """
     ProductProvider interface class. not-found
     """
@@ -266,14 +266,14 @@ class SberSuperMarketProductProviderUrlSearch(ProductProvider):
         return []
 
 
-class SberSuperMarketProductProvider(SberSuperMarketProductProviderUrlSearch):
+class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
     search_field_path: dict[By, str] = {
         By.CLASS_NAME: 'search-field-input',
     }
 
     def _get_search_field(self, parser: BaseParser) -> WebElement:
         """
-        Get base sbersupermarket page with search field.
+        Get base sbermegamarket page with search field.
         """
         for _ in range(MAX_TRIES):
             if search_field_data := self._get_elements_data(
