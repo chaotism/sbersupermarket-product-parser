@@ -177,8 +177,7 @@ class GinoProductRepository(ProductRepository):
             ProductAttributeModel
         ] = await self.attribute_model.bulk_create(
             attributes_for_insert,
-            update_fields=['value'],
-            on_conflict=['name'],
+            ignore_conflicts=True,
         )
         logger.debug(
             f'Successfully updated {len(attribute_instances)} instance attributes for {entity}'
@@ -234,8 +233,7 @@ class GinoProductRepository(ProductRepository):
         ]
         image_instances: List[ProductImageModel] = await self.image_model.bulk_create(
             images_for_insert,
-            update_fields=['url'],
-            on_conflict=['name'],
+            ignore_conflicts=True,
         )
         logger.debug(
             f'Successfully updated {len(image_instances)} instance images for {entity}'
