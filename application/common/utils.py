@@ -107,10 +107,12 @@ def retry_by_exception(max_tries=3, exceptions=(Exception,), **kwargs):
     return retry_decorator
 
 
-async def gather_tasks(tasks: List[Coroutine], timeout=10) -> List:
+async def gather_tasks(coroutines: List[Coroutine], timeout=10) -> List:
     """
     Work around for running tasks in parallel and logging errors.
     """
+    tasks = [asyncio.create_task(coroutine) for coroutine in coroutines]
+
     success_results = []
     finished_tasks, pending_tasks = await asyncio.wait(tasks, timeout=timeout)
     if pending_tasks:
