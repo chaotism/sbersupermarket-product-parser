@@ -2,6 +2,7 @@
 Providers base entities.
 """
 import itertools
+import time
 import urllib.parse
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
@@ -44,12 +45,6 @@ class SberMegaMarketProductProviderUrlSearch(ProductProvider):
     ProductProvider interface class. not-found
     """
 
-    page_not_found_marker_path: dict[By, str] = {
-        By.CLASS_NAME: 'not-found',
-    }
-    product_not_found_marker_path: dict[By, str] = {
-        By.CLASS_NAME: 'catalog-listing-not-found__title',
-    }
     product_name_path: dict[By, str] = {
         By.CLASS_NAME: 'pdp-header__title',
     }
@@ -89,8 +84,6 @@ class SberMegaMarketProductProviderUrlSearch(ProductProvider):
         with self._get_parser() as parser:
             self._get_product_page(goods_id, parser)
             logger.info(f'Start getting info for product with goods id: {goods_id}')
-            if self._get_not_found_marker(parser):
-                raise ProviderError(f'Cannot find product with goods id: {goods_id}')
 
             # TODO: Sometimes drives go down - maybe better decision to use BeautifulSoup with self.parser.page_source
             name = self._get_product_name(parser)
@@ -173,16 +166,6 @@ class SberMegaMarketProductProviderUrlSearch(ProductProvider):
         )
         parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
         return parser
-
-    def _get_not_found_marker(self, parser: BaseParser) -> bool:
-        """
-        Get not found.
-        """
-        if self._get_elements_data(
-            self.page_not_found_marker_path, parser
-        ) or self._get_elements_data(self.product_not_found_marker_path, parser):
-            return True
-        return False
 
     def _get_product_name(self, parser: BaseParser) -> ProductName:
         """
@@ -267,9 +250,17 @@ class SberMegaMarketProductProviderUrlSearch(ProductProvider):
 
 
 class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
-    search_field_path: dict[By, str] = {
+    search_data_field_path: dict[By, str] = {
         By.CLASS_NAME: 'search-field-input',
     }
+
+    @staticmethod
+    def _clear_search_data(search_field: WebElement):
+        search_field.clear()
+        if data := search_field.get_attribute('value'):
+            search_field.send_keys(Keys.BACKSPACE * len(data))
+        if max_length := search_field.get_attribute('maxlength'):
+            search_field.send_keys(Keys.BACKSPACE * int(max_length))
 
     def _get_search_field(self, parser: BaseParser) -> WebElement:
         """
@@ -277,9 +268,10 @@ class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
         """
         for _ in range(MAX_TRIES):
             if search_field_data := self._get_elements_data(
-                self.search_field_path, parser
+                self.search_data_field_path, parser
             ):
                 search_field_input = search_field_data[0]
+                self._clear_search_data(search_field_input)
                 return search_field_input
             parser.get_page(self.base_url)
 
@@ -289,16 +281,14 @@ class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
         """
         Get product page entity by goods id.
         """
+
         search_field_input = self._get_search_field(parser)
-
-        search_field_input.clear()
-        if data := search_field_input.get_attribute('value'):
-            for _ in data:
-                search_field_input.send_keys(Keys.BACKSPACE)
-        if max_length := search_field_input.get_attribute('maxlength'):
-            for _ in range(int(max_length)):
-                search_field_input.send_keys(Keys.BACKSPACE)
-
         search_field_input.send_keys(goods_id)
         search_field_input.send_keys(Keys.RETURN)
-        return parser
+        search_field_input.submit()
+
+        for _ in range(MAX_TRIES):
+            if str(goods_id) in parser.client.current_url:
+                return parser
+            time.sleep(1)
+        raise ProviderError('Cannot change current url to product url')
