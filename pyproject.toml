@@ -5,10 +5,6 @@ description = "Fast-api application for getting data from sbersupermarket"
 authors = ["Alexandr Bogut"]
 readme = "README.md"
 license = "MIT"
-packages = [
-    { include = "application" },
-]
-
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -51,6 +47,7 @@ mock = "^5.0.2"
 tortoise_orm = "storages.databases.connector.DEFAULT_TORTOISE_ORM_CONFIG"
 location = "./application/storages/databases/migrations"
 src_folder = "./."
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"

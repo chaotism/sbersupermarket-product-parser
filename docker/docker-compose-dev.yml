@@ -8,11 +8,11 @@ services:
     environment:
       API_HOST: "0.0.0.0"
       API_PORT: "8888"
-      DB_DATABASE: "srv_marketplaces"
-      DB_USER: "srv_marketplaces"
-      DB_PASSWORD: "look_in_vault"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
+      POSTGRES_DB: "srv_marketplaces"
+      POSTGRES_USER: "srv_marketplaces"
+      POSTGRES_PASSWORD: "look_in_vault"
+      PGSQL_HOST: "postgres"
+      PGSQL_PORT: "5432"
       SBER_PARSER_POOL_SIZE: 2
       SBER_PARSER_POOL_FASTLOAD: "TRUE"
       SBER_MEGAMARKET_URI: "https://sbermegamarket.ru"
