@@ -32,6 +32,7 @@ def get_web_driver(
     useragent: Optional[str] = None,
     proxy: Optional[str] = None,
     experimental_options: bool = False,
+    chrome_version_main: Optional[int] = None,
 ) -> uc.Chrome:
     options = uc.ChromeOptions()
 
@@ -59,7 +60,9 @@ def get_web_driver(
         options.add_argument('--dns-prefetch-disable')
         options.add_argument('--disable-gpu')
 
-    chrome = uc.Chrome(advanced_elements=True, options=options)
+    chrome = uc.Chrome(
+        advanced_elements=True, options=options, version_main=chrome_version_main
+    )
     chrome.maximize_window()
     chrome.implicitly_wait(time_to_wait=DEFAULT_TIME_TO_WAIT)
     return chrome
@@ -96,6 +99,7 @@ class BaseParser:
             useragent=get_useragent() if config.has_random_useragent else None,
             proxy=get_proxy() if config.has_proxies else None,
             experimental_options=config.has_experimental_options,
+            chrome_version_main=config.chrome_version,
         )
         self.client = client
         logger.info('Chrome client ready')

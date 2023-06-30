@@ -9,12 +9,12 @@ class DbSettings(BaseSettings):
     dsn: Optional[URL] = Field(None, env='DB_DSN')
 
     driver: Optional[str] = Field('asyncpg', env='DB_DRIVER')
-    host: Optional[str] = Field('127.0.0.1', env='DB_HOST')
-    port: Optional[int] = Field(5432, env='DB_PORT')
+    host: Optional[str] = Field('127.0.0.1', env='PGSQL_HOST')
+    port: Optional[int] = Field(5432, env='PGSQL_PORT')
 
-    db_name: str = Field(None, env='DB_DATABASE')
-    username: str = Field(None, env='DB_USER')
-    password: Optional[str] = Field(None, env='DB_PASSWORD')
+    db_name: str = Field(None, env='POSTGRES_DB')
+    username: str = Field(None, env='POSTGRES_USER')
+    password: Optional[str] = Field(None, env='POSTGRES_PASSWORD')
 
     @classmethod
     def generate(cls):
