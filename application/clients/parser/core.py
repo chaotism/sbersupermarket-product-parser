@@ -1,4 +1,5 @@
 from enum import Enum
+from datetime import datetime
 from queue import Queue
 from pathlib import Path
 from typing import Optional
@@ -42,15 +43,19 @@ def get_web_driver(
         options.page_load_strategy = page_load_strategy.value
 
     if user_data_dir:
-        options.user_data_dir = user_data_dir
+        logger.debug(f'Use user_data_dir: {user_data_dir}')
+        options.user_data_dir = str(user_data_dir)
     if useragent:
+        logger.debug(f'Use useragent: {useragent}')
         options.add_argument(
             f'--user-agent={useragent}'
         )  # could make driver detectable
     if proxy:
-        options.add_argument(f'--proxy-web={proxy}')  # could make driver detectable
+        logger.debug(f'Use proxy: {proxy}')
+        options.add_argument(f'--proxy-server={proxy}')  # could make driver detectable
 
     if experimental_options:  # TODO:  experimental_options could break chrome driver
+        logger.debug(f'Use experimental_options: {experimental_options}')
         options.add_argument('--single-process')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -100,6 +105,7 @@ class BaseParser:
             proxy=get_proxy() if config.has_proxies else None,
             experimental_options=config.has_experimental_options,
             chrome_version_main=config.chrome_version,
+            user_data_dir=config.chrome_data_dir,
         )
         self.client = client
         logger.info('Chrome client ready')
@@ -167,6 +173,15 @@ class BaseParser:
                 )
                 self.restart()
         return []
+
+    def get_screenshot(self):
+        log_folder_path = Path(self.config.log_folder)
+        if not log_folder_path.exists():
+            log_folder_path.mkdir(parents=True)
+        name = Path(self.client.current_url).name
+        self.client.save_screenshot(
+            f'{log_folder_path.absolute()}/{name}-{datetime.utcnow()}.png'
+        )
 
 
 class ParserPool:

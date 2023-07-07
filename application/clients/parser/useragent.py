@@ -1,8 +1,10 @@
 import random
+from loguru import logger
 
 
 def get_useragent() -> str:
     agent = random.choice(user_agents)
+    logger.debug(f'Get useragent {agent}')
     return agent
 
 

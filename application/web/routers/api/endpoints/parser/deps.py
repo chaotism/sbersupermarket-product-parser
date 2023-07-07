@@ -4,13 +4,15 @@ from domain.goods import (
     SberMegaMarketProductProvider,
     ProductInfoService,
 )
-from config import parser_config
+from config import application_config, parser_config
 
 
 async def get_product_parser_service() -> ProductInfoService:
     return ProductInfoService(
         product_repo=GinoProductRepository(),
         product_provider=SberMegaMarketProductProvider(
-            parser_pool=parser_pool, base_url=parser_config.url
+            parser_pool=parser_pool,
+            base_url=parser_config.url,
+            debug=application_config.is_debug,
         ),
     )

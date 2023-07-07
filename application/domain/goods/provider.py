@@ -7,6 +7,7 @@ import urllib.parse
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Optional, Generator
+from urllib.parse import urlparse
 
 from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
@@ -57,9 +58,12 @@ class SberMegaMarketProductProviderUrlSearch(ProductProvider):
     product_specs_values_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-value'}
     product_categories_path: dict[By, str] = {By.CLASS_NAME: 'breadcrumb-item'}
 
-    def __init__(self, parser_pool: ParserPool, base_url: HttpUrl) -> None:
+    def __init__(
+        self, parser_pool: ParserPool, base_url: HttpUrl, debug: bool = False
+    ) -> None:
         self.parser_pool = parser_pool
         self.base_url = base_url
+        self.debug = debug
 
     async def get_product(self, goods_id: GoodsID) -> ProductEntity:
         """
@@ -275,20 +279,24 @@ class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
                 return search_field_input
             parser.get_page(self.base_url)
 
+        if self.debug:
+            parser.get_screenshot()
         raise ProviderError('Cannot find search field')
 
     def _get_product_page(self, goods_id: GoodsID, parser: BaseParser):
         """
         Get product page entity by goods id.
         """
-
         search_field_input = self._get_search_field(parser)
         search_field_input.send_keys(goods_id)
         search_field_input.send_keys(Keys.RETURN)
         search_field_input.submit()
 
         for _ in range(MAX_TRIES):
-            if str(goods_id) in parser.client.current_url:
+            if str(goods_id) in urlparse(parser.client.current_url).path:
                 return parser
             time.sleep(1)
+
+        if self.debug:
+            parser.get_screenshot()
         raise ProviderError('Cannot change current url to product url')
