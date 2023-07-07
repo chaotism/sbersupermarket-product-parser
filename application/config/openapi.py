@@ -4,7 +4,7 @@ from pydantic import AnyHttpUrl, BaseSettings, Field
 DEFAULT_API_NAME = 'Internal parsing service'
 DEFAULT_API_VERSION = '0.0.1'
 DEFAULT_API_DESCRIPTION = 'API for humans'
-DEFAULT_SERVER_NAME = 'http://sbersupermarket-parser.edu'
+DEFAULT_SERVER_NAME = 'http://sbermegamarket-parser.edu'
 
 
 class OpenAPISettings(BaseSettings):

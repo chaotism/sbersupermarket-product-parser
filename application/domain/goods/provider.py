@@ -2,6 +2,7 @@
 Providers base entities.
 """
 import itertools
+import time
 import urllib.parse
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
@@ -11,6 +12,7 @@ from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
 from pydantic import ValidationError
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
 from clients.parser import BaseParser, ParserPool
@@ -19,6 +21,9 @@ from common.utils import async_wrapper, retry_by_exception
 from .entities import ProductEntity
 from .types import GoodsID, CategoryName, ProductName
 from ..types import Provider
+
+
+MAX_TRIES = 3
 
 
 class ProductProvider(Provider):
@@ -35,20 +40,18 @@ class ProductProvider(Provider):
         """
 
 
-class SberSuperMarketProductProviderOld(ProductProvider):
+class SberMegaMarketProductProviderUrlSearch(ProductProvider):
     """
-    ProductProvider interface class.
+    ProductProvider interface class. not-found
     """
 
     product_name_path: dict[By, str] = {
         By.CLASS_NAME: 'pdp-header__title',
-        By.XPATH: '//header/h1',
     }
     product_description_path: dict[By, str] = {By.CLASS_NAME: 'product-description'}
     product_price_path: dict[By, str] = {By.CLASS_NAME: 'pdp-sales-block__price-final'}
     product_images_path: dict[By, str] = {
         By.CLASS_NAME: 'slide__image',
-        By.XPATH: '//li[@class="pdp-reviews-gallery-preview__item"]/img[@class="lazy-img"]',
     }
     product_specs_names_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-name'}
     product_specs_values_path: dict[By, str] = {By.CLASS_NAME: 'pdp-specs__item-value'}
@@ -62,7 +65,7 @@ class SberSuperMarketProductProviderOld(ProductProvider):
         """
         Get product entity by goods id.
         """
-        return await retry_by_exception(exceptions=ProviderError, max_tries=3)(
+        return await retry_by_exception(exceptions=ProviderError, max_tries=MAX_TRIES)(
             async_wrapper(self._get_product)
         )(goods_id)
 
@@ -80,8 +83,9 @@ class SberSuperMarketProductProviderOld(ProductProvider):
         """
         with self._get_parser() as parser:
             self._get_product_page(goods_id, parser)
-            # TODO: Sometimes drives go down - maybe better decision to use BeautifulSoup with self.parser.page_source
             logger.info(f'Start getting info for product with goods id: {goods_id}')
+
+            # TODO: Sometimes drives go down - maybe better decision to use BeautifulSoup with self.parser.page_source
             name = self._get_product_name(parser)
             description = self._get_product_description(parser)
             price = self._get_product_price(parser)
@@ -89,7 +93,7 @@ class SberSuperMarketProductProviderOld(ProductProvider):
             specifications = self._get_product_specifications(parser)
             categories = self._get_product_categories(parser)
 
-            return self._make_product_entity(
+            product = self._make_product_entity(
                 goods_id=goods_id,
                 name=name,
                 description=description,
@@ -98,6 +102,9 @@ class SberSuperMarketProductProviderOld(ProductProvider):
                 specifications=specifications,
                 categories=categories,
             )
+            if product.is_empty:
+                raise ProviderError(f'Product data for goods id: {goods_id} is empty')
+            return product
 
     @staticmethod
     def _make_product_entity(
@@ -138,8 +145,6 @@ class SberSuperMarketProductProviderOld(ProductProvider):
         logger.debug(
             f'Got getting info for product with goods id {goods_id}: \n {product.json()}'
         )
-        if product.is_empty:
-            raise ProviderError(f'Product data for goods id: {goods_id} is empty')
         return product
 
     @staticmethod
@@ -244,22 +249,46 @@ class SberSuperMarketProductProviderOld(ProductProvider):
         return []
 
 
-class SberSuperMarketProductProvider(SberSuperMarketProductProviderOld):
+class SberMegaMarketProductProvider(SberMegaMarketProductProviderUrlSearch):
+    search_data_field_path: dict[By, str] = {
+        By.CLASS_NAME: 'search-field-input',
+    }
+
+    @staticmethod
+    def _clear_search_data(search_field: WebElement):
+        search_field.clear()
+        if data := search_field.get_attribute('value'):
+            search_field.send_keys(Keys.BACKSPACE * len(data))
+        if max_length := search_field.get_attribute('maxlength'):
+            search_field.send_keys(Keys.BACKSPACE * int(max_length))
+
+    def _get_search_field(self, parser: BaseParser) -> WebElement:
+        """
+        Get base sbermegamarket page with search field.
+        """
+        for _ in range(MAX_TRIES):
+            if search_field_data := self._get_elements_data(
+                self.search_data_field_path, parser
+            ):
+                search_field_input = search_field_data[0]
+                self._clear_search_data(search_field_input)
+                return search_field_input
+            parser.get_page(self.base_url)
+
+        raise ProviderError('Cannot find search field')
+
     def _get_product_page(self, goods_id: GoodsID, parser: BaseParser):
         """
         Get product page entity by goods id.
         """
-        product_data_url = parse_obj_as(
-            HttpUrl,
-            str(self.base_url),
-        )
-        parser.get_page(urllib.parse.urljoin(self.base_url, product_data_url))
-        search_field = parser.get_elements(by=By.CLASS_NAME, name='search-field-input')[
-            0
-        ]
-        search_field.send_keys(goods_id)
-        search_field_submit = parser.get_elements(
-            by=By.CLASS_NAME, name='header-search-form__search-button'
-        )[0]
-        search_field_submit.click()
-        return parser
+
+        search_field_input = self._get_search_field(parser)
+        search_field_input.send_keys(goods_id)
+        search_field_input.send_keys(Keys.RETURN)
+        search_field_input.submit()
+
+        for _ in range(MAX_TRIES):
+            if str(goods_id) in parser.client.current_url:
+                return parser
+            time.sleep(1)
+        raise ProviderError('Cannot change current url to product url')

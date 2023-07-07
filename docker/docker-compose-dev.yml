@@ -8,14 +8,14 @@ services:
     environment:
       API_HOST: "0.0.0.0"
       API_PORT: "8888"
-      DB_DATABASE: "srv_marketplaces"
-      DB_USER: "srv_marketplaces"
-      DB_PASSWORD: "look_in_vault"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      SBER_PARSER_POOL_SIZE: 1
+      POSTGRES_DB: "srv_marketplaces"
+      POSTGRES_USER: "srv_marketplaces"
+      POSTGRES_PASSWORD: "look_in_vault"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      SBER_PARSER_POOL_SIZE: 2
       SBER_PARSER_POOL_FASTLOAD: "TRUE"
-      SBER_SUPERMARKET_URI: "https://sbermegamarket.ru"
+      SBER_MEGAMARKET_URI: "https://sbermegamarket.ru"
     env_file:
       - ../.env
     ports:
@@ -28,7 +28,7 @@ services:
 
   postgres:
     container_name: postgres
-    image: postgres:12
+    image: postgres:14
     restart: always
     environment:
       POSTGRES_DB: "srv_marketplaces"

@@ -6,8 +6,8 @@ from fastapi.security import APIKeyHeader
 from loguru import logger
 
 AUTH_TOKEN_KEY = APIKeyHeader(
-    name=auth_config.auth_token_key_name, auto_error=True
-)  # set false for debug
+    name=auth_config.auth_token_key_name, auto_error=False
+)  # set true for force checking token
 
 
 def get_exists_auth_token_keys():

@@ -35,11 +35,12 @@ class ProductAttribute(BaseModel):
     product: fields.ForeignKeyRelation[Product] = fields.ForeignKeyField(
         'models.Product', related_name='attributes', index=True
     )
-    name = fields.CharField(max_length=256, index=True, unique=True)
+    name = fields.CharField(max_length=256, index=True)
     value = fields.CharField(max_length=1024)
 
     class Meta:
         table = 'product_attribute'
+        unique_together = (('product', 'name'),)
 
     def __str__(self):
         return self.name
@@ -73,11 +74,12 @@ class ProductImage(BaseModel):
     product: fields.ForeignKeyRelation[Product] = fields.ForeignKeyField(
         'models.Product', related_name='images', index=True
     )
-    name = fields.CharField(max_length=256, index=True, unique=True)
-    url = fields.CharField(max_length=512, index=True)
+    name = fields.CharField(max_length=256, index=True)
+    url = fields.CharField(max_length=512)
 
     class Meta:
         table = 'product_image'
+        unique_together = (('product', 'name'),)
 
     def __str__(self):
         return self.name

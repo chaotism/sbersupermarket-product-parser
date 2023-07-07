@@ -33,7 +33,7 @@ db-migrate:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich upgrade && set +a
 
 db-downgrade:
-	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich downgrade --yes -v "${MAKECMDGOALS:--1}" && set +a
+	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich downgrade --yes -v -1 && set +a
 
 db-reset:
 	export PYTHONPATH=$(APP_PATH) && set -a  && source .env && poetry run aerich downgrade --yes -v 0 && set +a
