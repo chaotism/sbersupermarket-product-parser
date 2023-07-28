@@ -41,7 +41,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
         );
         CREATE INDEX IF NOT EXISTS "idx_product_ima_name_92f7a8" ON "product_image" ("name");
         CREATE INDEX IF NOT EXISTS "idx_product_ima_product_39930c" ON "product_image" ("product_id");
-        CREATE UNIQUE INDEX "uid_product_ima_product_841bfe" ON "product_image" ("product_id", "name");
+        CREATE UNIQUE INDEX IF NOT EXISTS "uid_product_ima_product_841bfe" ON "product_image" ("product_id", "name");
         CREATE TABLE IF NOT EXISTS "aerich" (
             "id" SERIAL NOT NULL PRIMARY KEY,
             "version" VARCHAR(255) NOT NULL,

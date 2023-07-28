@@ -20,13 +20,13 @@ DEFAULT_TORTOISE_ORM_CONFIG = {
 
 
 def init_db(app: FastAPI, dsn: Optional[str] = None):
-    config: dict[str, dict] = deepcopy(DEFAULT_TORTOISE_ORM_CONFIG)
+    config: dict[str, dict] = deepcopy(DEFAULT_TORTOISE_ORM_CONFIG)  # type: ignore[arg-type]
     if dsn:
         config['connections']['default'] = dsn
 
     register_tortoise(
         app,
         config=DEFAULT_TORTOISE_ORM_CONFIG,
-        generate_schemas=True,
+        generate_schemas=True,  # TODO: set False if use migrations from zero
         add_exception_handlers=False,
     )

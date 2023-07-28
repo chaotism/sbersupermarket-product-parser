@@ -12,8 +12,8 @@ class DbSettings(BaseSettings):
     dsn: Optional[URL] = Field(None, env='DB_DSN')
 
     driver: Optional[str] = Field('asyncpg', env='DB_DRIVER')
-    host: Optional[str] = Field('127.0.0.1', env='PGSQL_HOST')
-    port: Optional[int] = Field(5432, env='PGSQL_PORT')
+    host: Optional[str] = Field('127.0.0.1', env='POSTGRES_HOST')
+    port: Optional[int] = Field(5432, env='POSTGRES_PORT')
 
     db_name: str = Field('srv_marketplaces', env='POSTGRES_DB')
     username: str = Field('srv_marketplaces', env='POSTGRES_USER')

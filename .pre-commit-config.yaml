@@ -27,3 +27,13 @@ repos:
         files: \.(py)$
         require_serial: true
         args: [ --verbose ]
+
+  - repo: local
+    hooks:
+      - id: system
+        name: mypy
+        entry: poetry run mypy .
+        language: system
+        files: \.(py)$
+        pass_filenames: false
+        require_serial: true

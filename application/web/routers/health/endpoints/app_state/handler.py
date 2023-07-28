@@ -28,7 +28,7 @@ async def status(
 @router.get('/readiness-probe', response_model=DbStateResponseData)
 async def readiness_prob(
     db_data=Depends(get_db_info),
-) -> DbStateResponseData:  # TODO: add check logic
+) -> DbStateResponseData:
     logger.info('Health-status start')
     db_info = await db_data.check()
     return db_info
@@ -37,7 +37,7 @@ async def readiness_prob(
 @router.get('/liveness-probe', response_model=DbStateResponseData)
 async def liveness_prob(
     db_data=Depends(get_db_info),
-) -> DbStateResponseData:  # TODO: add check logic
+) -> DbStateResponseData:
     logger.info('liveness_prob')
     db_info = await db_data.check()
     return db_info

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 APP_PATH=./application
 TEST_PATH=./tests
 
-init:
+install:
 	pip install poetry
 	poetry install
 

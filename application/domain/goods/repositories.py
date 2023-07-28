@@ -29,7 +29,7 @@ class ProductRepository(Repository):
         pass
 
     @abstractmethod
-    async def get_by_id(self, instance_id: IntId) -> ProductEntity:  # TODO: remove it
+    async def get_by_id(self, instance_id: IntId) -> ProductEntity:
         pass
 
     @abstractmethod
@@ -114,7 +114,7 @@ class GinoProductRepository(ProductRepository):
             product = await self.model.create(
                 goods_id=entity.goods_id, name=entity.name, price=entity.price
             )
-            entity.set_id(product.id)
+            entity.set_id(IntId(product.id))
             instance_id = entity.get_id()
             await self._update_or_create_attributes(product, entity=entity)
             await self._update_or_create_categories(product, entity=entity)
@@ -145,7 +145,7 @@ class GinoProductRepository(ProductRepository):
                 f'Successfully update product instance: {product} for entity {entity}'
             )
 
-    async def delete(self, entity: ProductEntity) -> IntId:
+    async def delete(self, entity: ProductEntity):
         instance_id = entity.get_id()
         async with self.atomic():
             product = await self.model.get_or_none(id=instance_id)
@@ -153,7 +153,6 @@ class GinoProductRepository(ProductRepository):
                 raise NotFoundError(f'Cannot product instance for id {instance_id}')
             await product.delete()
             logger.debug(f'Delete product instance: {product} for id {instance_id}')
-            return instance_id
 
     @asynccontextmanager
     async def atomic(self):
@@ -175,7 +174,7 @@ class GinoProductRepository(ProductRepository):
         ]
         attribute_instances: List[
             ProductAttributeModel
-        ] = await self.attribute_model.bulk_create(
+        ] = await self.attribute_model.bulk_create(  # type: ignore[assignment]
             attributes_for_insert,
             ignore_conflicts=True,
         )
@@ -196,7 +195,7 @@ class GinoProductRepository(ProductRepository):
                 raw_instance.parent_category = categories_for_insert[-1]
             categories_for_insert.append(raw_instance)
 
-        category_instances: List[CategoryModel] = await self.category_model.bulk_create(
+        category_instances: List[CategoryModel] = await self.category_model.bulk_create(  # type: ignore[assignment]
             categories_for_insert,
             update_fields=['parent_category_id'],
             on_conflict=['name'],
@@ -210,7 +209,7 @@ class GinoProductRepository(ProductRepository):
         )
         for index, category_instance in enumerate(stored_category_instances):
             if index > 0:
-                category_instance.parent_category_id = category_instances[index - 1].id
+                category_instance.parent_category = category_instances[index - 1]
                 await category_instance.save()
             await category_instance.products.add(product_instance)
 
@@ -231,7 +230,7 @@ class GinoProductRepository(ProductRepository):
             )
             for image in entity.images
         ]
-        image_instances: List[ProductImageModel] = await self.image_model.bulk_create(
+        image_instances: List[ProductImageModel] = await self.image_model.bulk_create(  # type: ignore[assignment]
             images_for_insert,
             ignore_conflicts=True,
         )

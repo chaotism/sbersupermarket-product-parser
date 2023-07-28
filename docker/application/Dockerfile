@@ -14,7 +14,7 @@ RUN apt-get -y update \
 RUN mkdir -p $USER_HOME/
 WORKDIR $USER_HOME
 COPY ./Makefile ./pyproject.toml ./poetry.lock $USER_HOME/
-RUN make init && make clear_cache
+RUN make install && make clear_cache
 
 # Copy application
 COPY ./  $USER_HOME

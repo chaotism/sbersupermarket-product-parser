@@ -1,1 +1,1 @@
-from .core import get_web_driver, BaseParser, ParserPool, parser_pool
+from .core import get_web_driver, BaseParser, By, ParserPool, parser_pool
