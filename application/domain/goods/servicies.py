@@ -18,9 +18,27 @@ class ProductInfoService(Service):
         self.product_repo = product_repo
         self.product_provider = product_provider
 
-    async def register_provider_product_info(self, goods_id: GoodsID) -> ProductEntity:
+    async def manual_upload_product_info(
+        self, product_entity: ProductEntity
+    ) -> GoodsID:
+        product_data = await self._update_product(
+            product_entity.goods_id, product_entity
+        )
+        return product_data.goods_id
+
+    async def get_product_info_from_raw_data(self, goods_id: GoodsID) -> ProductEntity:
         try:
             product_data = await self.product_provider.get_product(goods_id)
+        except ProviderError as err:
+            logger.warning(f'Get provider error {err} for goods_id {goods_id} ')
+            raise NotFoundError(f'Cannot find information for goods_id: {goods_id}')
+        return await self._update_product(goods_id, product_data)
+
+    async def register_provider_product_info(
+        self, goods_id: GoodsID, raw_data: Optional[bytes] = None
+    ) -> ProductEntity:
+        try:
+            product_data = await self.product_provider.get_product(goods_id, raw_data)
         except ProviderError as err:
             logger.warning(f'Get provider error {err} for goods_id {goods_id} ')
             raise NotFoundError(f'Cannot find information for goods_id: {goods_id}')

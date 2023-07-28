@@ -17,7 +17,7 @@ IGNORE_UNREFRESHED_AFTER = REFRESH_INTERVAL * 2  # min
 invalidation = InvalidationSupport()
 
 
-def async_cache(func):  # TODO: think about using
+def async_cache(func):
     """
     Cache coroutine function results.
     """

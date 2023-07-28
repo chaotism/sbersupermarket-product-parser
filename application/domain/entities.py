@@ -50,7 +50,7 @@ class Entity(EncodedModel):
     def update(self, instance: BaseModel):
         self_data = self.dict()
         self_data.update(instance.dict(exclude_none=True))
-        self.__init__(**self_data)
+        self.__init__(**self_data)  # type: ignore[misc]
         self.set_modified_at()
 
     def dict(self, *args, **kwargs):

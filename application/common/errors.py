@@ -8,6 +8,8 @@ class ApplicationError(Exception):
     Base application exception.
     """
 
+    default_message = 'Application error'
+
     def __init__(self, *args, **kwargs):
         if args or kwargs:
             super().__init__(*args, **kwargs)

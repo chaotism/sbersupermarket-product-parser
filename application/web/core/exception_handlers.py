@@ -50,7 +50,7 @@ async def http_422_error_handler(request: Request, exc: HTTPException) -> JSONRe
     Handler for 422 error to transform default pydantic error object to gothinkster format
     """
 
-    errors = {'body': []}
+    errors: dict[str, list[str]] = {'body': []}
 
     if isinstance(exc.detail, Iterable) and not isinstance(
         exc.detail, str

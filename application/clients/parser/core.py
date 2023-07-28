@@ -8,16 +8,22 @@ import undetected_chromedriver as uc
 from loguru import logger
 from pydantic import HttpUrl
 from selenium.common.exceptions import WebDriverException, TimeoutException
-from selenium.webdriver.common.by import By
+from selenium.webdriver.common.by import By as SeleniumBy
 from selenium.webdriver.remote.webelement import WebElement
 
 from clients.parser.proxies import get_proxy
 from clients.parser.useragent import get_useragent
-from common.errors import ProviderError
+from common.errors import ClientError
 from common.utils import retry_by_exception
 from config.client import ParserSettings
 
 DEFAULT_TIME_TO_WAIT = 3
+
+
+class By(Enum):  # could be rewritten by Enum from dict
+    CLASS_NAME = SeleniumBy.CLASS_NAME
+    XPATH = SeleniumBy.XPATH
+    ID = SeleniumBy.ID
 
 
 class LoadStrategies(Enum):
@@ -119,12 +125,13 @@ class BaseParser:
             return
         logger.info('Start closing client...')
         try:
-            self.client.close()
+            if isinstance(self.client, uc.Chrome):
+                self.client.close()
+                self.client.quit()
         except WebDriverException as err:
             logger.warning(f'Get problem with closing chrome driver: {str(err)}')
             if 'failed to check if window was closed' not in str(err):
                 raise
-        self.client.quit()
         logger.info('Client closed')
         self.client = None
 
@@ -134,9 +141,10 @@ class BaseParser:
 
     def get_page(self, url: HttpUrl) -> uc.Chrome:
         if not self.is_inited:
-            raise ProviderError(f'{self.__class__.__name__} is not inited')
-        logger.debug(f'Get page {url}')
+            raise ClientError(f'{self.__class__.__name__} is not inited')
+        assert isinstance(self.client, uc.Chrome)
 
+        logger.debug(f'Get page {url}')
         for i in range(self.RETRY_COUNT + 1):
             try:
                 self.client.get(url)
@@ -154,11 +162,11 @@ class BaseParser:
 
     def get_elements(self, by: By, name: str) -> list[WebElement]:
         if not self.is_inited:
-            raise ProviderError(f'{self.__class__.__name__} is not inited')
+            raise ClientError(f'{self.__class__.__name__} is not inited')
         logger.debug(f'Get elements by {by} with value {name}')
         for _ in range(self.RETRY_COUNT):
             try:
-                elements = self.client.find_elements(by, name)
+                elements = self.client.find_elements(by.value, name)  # type: ignore[union-attr]
                 if not elements:
                     continue
                 return elements
@@ -175,11 +183,11 @@ class BaseParser:
         return []
 
     def get_screenshot(self):
-        log_folder_path = Path(self.config.log_folder)
+        log_folder_path = Path(self.config.log_folder)  # type: ignore[union-attr]
         if not log_folder_path.exists():
             log_folder_path.mkdir(parents=True)
-        name = Path(self.client.current_url).name
-        self.client.save_screenshot(
+        name = Path(self.client.current_url).name  # type: ignore[union-attr]
+        self.client.save_screenshot(  # type: ignore[union-attr]
             f'{log_folder_path.absolute()}/{name}-{datetime.utcnow()}.png'
         )
 
@@ -206,22 +214,28 @@ class ParserPool:
             parser = BaseParser()
             parser.init(self.config)
 
-            self.pool.put(parser)
+            self.pool.put(parser)  # type: ignore[union-attr]
 
     def close(self):
         if not self.is_inited:
             logger.warning('Pool is not inited')
             return
 
-        while not self.pool.empty():
-            parser = self.pool.get()
+        while not self.pool.empty():  # type: ignore[union-attr]
+            parser = self.pool.get()  # type: ignore[union-attr]
             parser.close_client()
 
     def get(self) -> BaseParser:
-        return self.pool.get()
+        if not self.is_inited:
+            raise ClientError('Pool is not inited')
+
+        return self.pool.get()  # type: ignore[union-attr]
 
     def put(self, parser: BaseParser):
-        return self.pool.put(parser)
+        if self.pool is None:
+            raise ClientError('Pool is not inited')
+
+        return self.pool.put(parser)  # type: ignore[union-attr]
 
 
 parser_pool = ParserPool()

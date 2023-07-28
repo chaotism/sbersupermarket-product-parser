@@ -44,7 +44,7 @@ def duration_measure(func: Callable) -> Callable:
     start_time_var: contextvars.ContextVar[float] = contextvars.ContextVar('start_time')
 
     def on_done(fut):
-        start_time = start_time_var.get('start_time')
+        start_time: float = float(start_time_var.get('start_time'))
         end_time = time.time()
         logger.info(
             f'Completed {func.__name__}. Elapsed time: {end_time - start_time} seconds'
@@ -132,7 +132,7 @@ async def gather_tasks(coroutines: List[Coroutine], timeout=10) -> List:
 
 def cancel_all_tasks_wrapper(
     func: Callable,
-) -> Callable:  # TODO: use in background task
+) -> Callable:  # TODO: add logic for using this method
     """
     Decorator for stopping all running task before start func.
     """
