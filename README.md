@@ -40,7 +40,7 @@
     ```sh
     export CURL_CA_BUNDLE=
     ```
-    + скачать сертификаты точки для нексуса и добавить их
+    + скачать сертификаты для нексуса и добавить их
     ```sh
     export REQUESTS_CA_BUNDLE=PATH_TO_CERT
     ```
