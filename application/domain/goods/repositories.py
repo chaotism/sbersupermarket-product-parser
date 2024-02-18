@@ -65,7 +65,7 @@ class GinoProductRepository(ProductRepository):
     image_model = ProductImageModel
 
     async def get_count(self) -> int:
-        return await ProductModel.all().count()
+        return await self.model.all().count()
 
     async def get_by_id(self, instance_id: IntId) -> ProductEntity:
         product = await (
